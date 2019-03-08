@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.QACheckReportMapper">
+
+    <resultMap id="report" type="com.egdfrm.unit.model.stock.QACheckReportExcel"><!-- VARCHAR  NUMERIC-->
+        <result column="check_date" property="check_date" jdbcType="VARCHAR" />
+        <result column="inspect_number" property="inspect_number" jdbcType="VARCHAR" />
+        <result column="line_code" property="line_code" jdbcType="VARCHAR" />
+        <result column="user_name" property="user_name" jdbcType="VARCHAR" />
+         <result column="model" property="model" jdbcType="VARCHAR" />
+        <result column="segment1" property="segment1" jdbcType="VARCHAR" />
+        <result column="mo" property="mo" jdbcType="VARCHAR" />
+        <result column="pack_qty" property="pack_qty" jdbcType="NUMERIC" />
+        <result column="aql" property="aql" jdbcType="NUMERIC" />
+        <result column="maj_qty" property="maj_qty" jdbcType="NUMERIC" />
+        <result column="min_qty" property="min_qty" jdbcType="NUMERIC" />
+        <result column="spe_qty" property="spe_qty" jdbcType="NUMERIC" />
+        <result column="major_qty" property="major_qty" jdbcType="NUMERIC" />
+        <result column="sec_qty" property="sec_qty" jdbcType="NUMERIC" />
+        <result column="check_status" property="check_status" jdbcType="VARCHAR" />
+        <result column="check_msg" property="check_msg" jdbcType="VARCHAR" />
+        <result column="check_remark" property="check_remark" jdbcType="VARCHAR" />  
+    </resultMap>
+
+
+    <!--count-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.QACheckReportExcel">
+       select count(1)
+         from apps.MES_PACKING_CHECK_REPORT_V where 1 = 1
+         <if test="model.line_code != null and model.line_code != '' ">
+        	and line_code=#{model.line_code}
+        </if>
+        <if test="model.inspect_number != null and model.inspect_number != '' ">
+        	and inspect_number=#{model.inspect_number}
+        </if>
+        <if test="model.check_date_start != null and model.check_date_start != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &gt;=to_date(#{model.check_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.check_date_end != null and model.check_date_end != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &lt;= to_date(#{model.check_date_end}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+    </select>
+
+    <!--分页数据-->
+    <select id="findPage" resultMap="report" parameterType="com.egdfrm.unit.model.stock.QACheckReportExcel">
+      SELECT * from (
+         select ROWNUM rnum,check_date,inspect_number,line_code,user_name,model,segment1,mo,pack_qty,aql,maj_qty,min_qty,spe_qty,major_qty,sec_qty,check_status,check_msg,check_remark 
+		  from apps.MES_PACKING_CHECK_REPORT_V where 1 = 1
+		 <if test="model.line_code != null and model.line_code != '' ">
+        	and line_code=#{model.line_code}
+        </if>
+        <if test="model.inspect_number != null and model.inspect_number != '' ">
+        	and inspect_number=#{model.inspect_number}
+        </if>
+        <if test="model.check_date_start != null and model.check_date_start != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &gt;=to_date(#{model.check_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.check_date_end != null and model.check_date_end != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &lt;= to_date(#{model.check_date_end}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+        
+    </select>
+
+
+     
+    <select id="exportExcel" resultMap="report" parameterType="com.egdfrm.unit.model.stock.QACheckReportExcel">
+         select check_date,inspect_number,line_code,user_name,model,segment1,mo,pack_qty,aql,maj_qty,min_qty,spe_qty,major_qty,sec_qty,check_status,check_msg,check_remark 
+		  from apps.MES_PACKING_CHECK_REPORT_V where 1 = 1
+         <if test="model.line_code != null and model.line_code != '' ">
+        	and line_code=#{model.line_code}
+        </if>
+        <if test="model.inspect_number != null and model.inspect_number != '' ">
+        	and inspect_number=#{model.inspect_number}
+        </if>
+        <if test="model.check_date_start != null and model.check_date_start != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &gt;=to_date(#{model.check_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.check_date_end != null and model.check_date_end != '' ">
+        	and to_date(check_date,'yyyy-MM-dd HH24:mi:ss') &lt;= to_date(#{model.check_date_end}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+    </select>
+</mapper>

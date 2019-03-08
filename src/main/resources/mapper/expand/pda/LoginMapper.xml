@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.LoginMapper" >
+ 
+
+  
+  <!-- 获取PDA权限 -->
+  <select id="getPdaRoleFunction" parameterType="String" resultType="String">
+      SELECT FC.FUNCTION_CODE FROM (
+SELECT DISTINCT FUN.FUNCTION_CODE,FUN.SORT
+    FROM MES.TT_APPLICATION_USER AU
+    LEFT JOIN MES.TT_USER_ROLE UR
+      ON AU.LOGIN_NAME = UR.LOGIN_NAME
+    LEFT JOIN MES.TT_ROLE_FUNCTION RF
+      ON RF.ROLE_CODE = UR.ROLE_CODE
+    LEFT JOIN MES.TT_FUNCTION FUN
+      ON RF.FUNCTION_CODE = FUN.FUNCTION_CODE
+   WHERE FUN.PARENT_FUNCTION_CODE = 'PDAMANAGE'
+     AND AU.LOGIN_NAME = #{loginName, jdbcType = VARCHAR}
+     ORDER BY FUN.SORT
+     ) FC
+    
+  </select>
+  
+
+  
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.ResetMapper">
+
+    
+    <!-- 验证报检单 -->
+     <select id="verificationInspect" resultType="java.lang.String" parameterType="java.lang.String">
+     select t.inspect_number from  mes.mes_packing_headers t 
+     	where t.check_date is null
+     <if test=" inspectNum!=null and inspectNum!='' "> 
+    	 and t.inspect_number =#{inspectNum}
+     </if>
+     </select>
+     <!-- 重置报检单 -->
+     <update id="resetInspect" parameterType="java.lang.String">
+     	update mes.mes_packing_headers t set t.inspect_user_id = null,
+           t.inspect_date    = null,
+           t.inspect_number  = null,
+           t.check_status    = null  
+            where t.check_date is null
+           <if test=" inspectNum!=null and inspectNum!='' "> 
+    			 and t.inspect_number =#{inspectNum}
+   		  </if>
+     
+     </update>
+     
+     <!-- 验证入库单-->
+     <select id="verificationStock" resultType="java.lang.String" parameterType="java.lang.String">
+     select t.inv_number from  mes.mes_packing_headers t 
+     	where t.locattion_code is null
+     <if test=" stockNum!=null and stockNum!='' "> 
+    	 and t.inv_number =#{stockNum}
+     </if>
+     </select>
+     <!-- 重置入库单-->
+     <update id="resetStock" parameterType="java.lang.String">
+     	update mes.mes_packing_headers t
+  			 set t.inv_number    = null    
+		where  t.locattion_code is null  
+           <if test=" stockNum!=null and stockNum!='' "> 
+    		  and t.inv_number =#{stockNum}
+     	   </if>
+     
+     </update>
+ 
+
+    
+</mapper>

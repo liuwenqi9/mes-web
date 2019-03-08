@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.board.ToDeliveryMapper">
+
+    <!--查询数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="java.lang.Integer">
+        select count(1) total from apps.cux_move_orders_v t where t.organization_id = #{orgId} and t.released_status = 'Y'
+    </select>
+
+
+    <!--待发货分页查询-->
+    <select id="findPage" resultType="java.util.Map">
+        select account_name,source_header_number,request_number,segment1,prod_type,quantity,transaction_date,description from (
+            select rownum rnum,organization_id,released_status,account_name,source_header_number,request_number,segment1,prod_type,quantity,transaction_date,description from apps.cux_move_orders_v t
+            where t.organization_id = #{orgId} and t.released_status = 'Y'
+            AND rownum &lt;= #{page.endset}
+        ) tmp where rnum &gt;= #{page.offset}
+    </select>
+    
+    <!--查询数据总数 报表-->
+    <select id="getCount1" resultType="java.lang.Long" parameterType="java.lang.Integer">
+        select count(1) total from (
+       		 select 
+                  t.transaction_date,
+                  t.account_name,
+                  count(distinct t.request_number) mo_count,
+                  count(distinct t.segment1) item_count,
+                  sum(quantity) quantity
+             from apps.cux_move_orders_v t
+            where 1 = 1
+              and t.released_status = 'Y'
+            group by t.transaction_date, t.account_name
+        ) h 
+    </select>
+ 
+    <!--待发货分页查询 报表 -->
+    <select id="findPage1" resultType="java.util.Map">
+        select * from (
+          		 select rownum rnum,p.* from
+             (  select 
+                  t.transaction_date,
+                  t.account_name,
+                  count(distinct t.request_number) mo_count,
+                  count(distinct t.segment1) item_count,
+                  sum(quantity) quantity
+             from apps.cux_move_orders_v t
+            where 1 = 1
+              and t.released_status = 'Y'
+            group by t.transaction_date, t.account_name ) p where 1=1
+            AND rownum &lt;= #{page.endset}
+        ) tmp where rnum &gt;= #{page.offset}
+    </select>
+
+
+	<select id="sum_findPage1" resultType="java.util.Map">
+         select sum(p.mo_count) mo_count,sum(p.item_count) item_count,sum(p.quantity) quantity   from 
+                   (  select 
+               t.transaction_date   
+               , t.account_name      
+               ,count(distinct t.request_number) mo_count    
+               ,count(distinct t.segment1)      item_count   
+               ,sum(quantity) quantity   
+                from apps.cux_move_orders_v t 
+                where t.released_status = 'Y'
+                group by t.transaction_date 
+                      ,t.account_name ) p
+    </select>
+
+	
+	<resultMap id="exportExcel" type="com.egdfrm.unit.excelmodel.StockSendExcel"> 
+	      		<result column="account_name" property="accountName" jdbcType="VARCHAR"/>	 
+		        <result column="source_header_number" property="sourceHeaderNumber" jdbcType="NUMERIC"/>
+		        <result column="request_number" property="requestNumber" jdbcType="NUMERIC"/>
+		        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+		        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>
+		        <result column="quantity" property="quantity" jdbcType="NUMERIC"/> 
+		        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+		        <result column="transaction_date" property="transactionDate" jdbcType="VARCHAR"/>
+		        <result column="description" property="description" jdbcType="NUMERIC"/>
+	    </resultMap>
+	
+
+	<!--待发货Excel-->
+    <select id="findPageExcel" resultMap="exportExcel"> 
+              select account_name,source_header_number,request_number,segment1,prod_type,quantity,transaction_date,description from apps.cux_move_orders_v t
+            where t.organization_id = #{orgId} and t.released_status = 'Y' 
+    </select>
+
+</mapper>

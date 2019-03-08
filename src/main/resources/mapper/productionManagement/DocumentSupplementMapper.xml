@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.DocumentSupplementMapper">
+
+    <!--根据报检单号获取报检单-->
+    <select id="getInspectionByInspectionNumber"  resultType="map">
+        SELECT T.SEGMENT2,
+               T.CUSTOM_MODEL,
+		       T.WIP_ENTITY_NAME,
+		       T.PLAN_LINE,
+		       SUM(NVL(T.PACK_QUANTITY, 0)) PACKNUMBER
+		  FROM APPS.MES_PACKING_HEADERS_CHECK_V T
+		 WHERE T.INSPECT_NUMBER = #{inspectionNumber,jdbcType=VARCHAR}
+		 GROUP BY T.SEGMENT2,T.CUSTOM_MODEL, T.WIP_ENTITY_NAME, T.PLAN_LINE
+    </select>
+
+</mapper>

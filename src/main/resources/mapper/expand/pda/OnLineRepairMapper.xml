@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.OnLineRepairMapper" >
+
+
+
+  <!-- PDA上线返修-扫描包装/产品条码 -->
+  <select id="getRepairStyle" parameterType="java.math.BigDecimal" resultType="com.egdfrm.unit.model.expand.pda.OnLineRepairData">
+	   <![CDATA[ 
+		 
+			 select b.segment1 lotno,
+	       apps.mes_barcodes_pd_pkg.get_prod_type(mb.primary_item_id) styleno,
+	       1 num
+	  from mes.mes_wip_barcodes    mb,
+	       apps.mtl_system_items_b b
+	 where b.inventory_item_id = mb.primary_item_id
+	   and b.organization_id = mb.organization_id
+	   and mb.wip_barcode_id = #{packBarcodeId,jdbcType=NUMERIC}
+	union all
+	select b.segment1 lotno,
+	       apps.mes_barcodes_pd_pkg.get_prod_type(ml.item_id) styleno,
+	       ml.num
+	  from (select apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id) item_id,
+	               nvl(sum(nvl(l.quantity, 0)), 0) num
+	          from mes.mes_packing_lines l
+	         where l.packing_type <> 'PACK'
+	         start with l.packing_barcode_id = #{packBarcodeId,jdbcType=NUMERIC}
+	        connect by l.packing_barcode_id = prior l.line_barcode_id
+	         group by apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id)) ml,
+	       apps.mtl_system_items_b b
+	 where b.inventory_item_id = ml.item_id
+	   and b.organization_id = 101
+		 
+	 ]]>
+  </select>  
+  
+  <!--@HGB PDA上线返修-扫描包装/产品条码 -->
+  <select id="getRepairStyle2" parameterType="java.math.BigDecimal" resultType="com.egdfrm.unit.model.expand.pda.OnLineRepairData">
+	   <![CDATA[ 
+		 
+			 select b.segment1 lotno,
+	       apps.mes_barcodes_pd_pkg.get_prod_type(mb.primary_item_id) styleno,
+	       1 num
+	  from mes.mes_wip_barcodes    mb,
+	       apps.mtl_system_items_b b
+	 where b.inventory_item_id = mb.primary_item_id
+	   and b.organization_id = mb.organization_id
+	   and mb.wip_barcode_id = #{packBarcodeId,jdbcType=NUMERIC}
+	union all
+	select b.segment1 lotno,
+	       apps.mes_barcodes_pd_pkg.get_prod_type(ml.item_id) styleno,
+	       ml.num
+	  from (select apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id) item_id,
+	               nvl(sum(nvl(l.quantity, 0)), 0) num
+	          from mes.mes_packing_lines l
+	         where l.packing_type <> 'PACK'
+	         start with l.packing_barcode_id = #{packBarcodeId,jdbcType=NUMERIC}
+	        connect by l.packing_barcode_id = prior l.line_barcode_id
+	         group by apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id)) ml,
+	       apps.mtl_system_items_b b
+	 where b.inventory_item_id = ml.item_id
+	   and b.organization_id = 101
+	   
+	   Union All
+ select b.segment1 lotno,
+         apps.mes_barcodes_pd_pkg.get_prod_type(ml.item_id) styleno,
+         ml.num
+    from (select apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id) item_id,
+                 nvl(sum(nvl(l.quantity, 0)), 0) num
+            from mes.mes_packing_lines_ship l
+           where 1=1
+           start with l.packing_barcode_id = #{packBarcodeId,jdbcType=NUMERIC}
+          connect by l.packing_barcode_id = prior l.line_barcode_id
+           group by apps.mes_barcodes_ship_pkg.get_item_id(l.line_barcode_id)) ml,
+         apps.mtl_system_items_b b
+   where b.inventory_item_id = ml.item_id
+     and b.organization_id = 101
+		 
+	 ]]>
+  </select>  
+   <parameterMap type="Map" id="onLineRepairMap">
+        <parameter property="docNumber"  />
+        <parameter property="userId"  />
+        <parameter property="processId"  />
+        <parameter property="barCodeId"  />
+        <parameter property="dbreturn.xStatus"  />
+        <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+
+    <!--(上线返修) 验证领料单 -->
+    <select id="callPdaCheckDoc" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.cux_wip_process_pkg.pda_check_doc(
+        #{docNumber,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+    <!--(上线返修) 验证领料单和条码 -->
+    <select id="callPdaReprodCheck" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.cux_wip_process_pkg.pda_reprod_check(
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{docNumber,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+    <!--(上线返修回退) 验证回退领料单和条码 -->
+    <select id="reTurnCallPdaReprodCheck" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.cux_wip_process_pkg.pda_reprod_check_return(
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{docNumber,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <!--(上线返修) 提交-->
+    <select id="callPdaProcessReprod" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.cux_wip_process_pkg.pda_process_reprod(
+        #{processId,mode=IN,jdbcType=DECIMAL},
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{docNumber,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+    <!--(上线返修回退) 提交-->
+    <select id="reTurnCallPdaProcessReprod" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.cux_wip_process_pkg.pda_process_reprod_return(
+        #{processId,mode=IN,jdbcType=DECIMAL},
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{docNumber,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <!--(上线返修) 提交temp-->
+    <select id="callPdaReprodTransactionTemp" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.mes_barcodes_pub_pkg.reprod_transaction_temp(
+        #{userId,mode=IN,jdbcType=DECIMAL},
+        #{processId,mode=IN,jdbcType=DECIMAL},
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+    <!--(上线返修回退) 提交temp-->
+    <select id="reTurnCallPdaReprodTransactionTemp" parameterMap="onLineRepairMap" statementType="CALLABLE">
+        {call apps.mes_barcodes_pub_pkg.insert_transaction_temp(
+        #{userId,mode=IN,jdbcType=DECIMAL},
+        #{processId,mode=IN,jdbcType=DECIMAL},
+        #{barCodeId,mode=IN,jdbcType=DECIMAL},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+
+
+
+
+
+
+  <!-- PDA上线返修-提交-循环插入-->
+  <select id="callReprodTransactionTemp" parameterMap="onLineRepairMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_pub_pkg.reprod_transaction_temp(
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{barCodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select> 
+  <!-- PDA上线返修-提交-更新状态-->
+  <select id="callReprodProcessMes" parameterMap="onLineRepairMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_pub_pkg.reprod_process_mes(
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select> 
+</mapper>

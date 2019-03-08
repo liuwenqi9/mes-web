@@ -1,0 +1,105 @@
+{
+  "rows": [
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000101"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000102"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000103"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000104"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000105"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000106"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000107"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000108"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000109"
+    },
+    {
+      "MEANING": "已发放",
+      "DESCRIPTION": "UT11A(CHN) 426U+1797C \"UNI-T\"唛 吸塑",
+      "PLAN_LINE_CODE": "B",
+      "WIP_ENTITY_NAME": "T16120003",
+      "START_QUANTITY": 150,
+      "SEGMENT": "180100180042",
+      "STATUS": "生产中",
+      "BARCODE_TEXT": "C160000110"
+    }
+  ],
+  "total": 150
+}

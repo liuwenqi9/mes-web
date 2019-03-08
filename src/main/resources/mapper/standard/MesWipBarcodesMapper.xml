@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.MesWipBarcodesMapper" >
+  <resultMap id="BaseResultMap" type="com.egdfrm.unit.model.standard.MesWipBarcodes" >
+    <result column="WIP_BARCODE_ID" property="wipBarcodeId" jdbcType="DECIMAL" />
+    <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+    <result column="WIP_ENTITY_ID" property="wipEntityId" jdbcType="DECIMAL" />
+    <result column="PRIMARY_ITEM_ID" property="primaryItemId" jdbcType="DECIMAL" />
+    <result column="BARCODE_TYPE" property="barcodeType" jdbcType="VARCHAR" />
+    <result column="BARCODE_TEXT" property="barcodeText" jdbcType="VARCHAR" />
+    <result column="SUBINVENTORY_CODE" property="subinventoryCode" jdbcType="VARCHAR" />
+    <result column="LOCATTION_CODE" property="locattionCode" jdbcType="VARCHAR" />
+    <result column="START_QUANTITY" property="startQuantity" jdbcType="DECIMAL" />
+    <result column="ONHAND_QUANTITY" property="onhandQuantity" jdbcType="DECIMAL" />
+    <result column="PACKING_FLAG" property="packingFlag" jdbcType="VARCHAR" />
+    <result column="STATUS_CODE" property="statusCode" jdbcType="VARCHAR" />
+    <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+    <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+    <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.egdfrm.unit.model.standard.MesWipBarcodes" extends="BaseResultMap" >
+    <result column="BARCODE_CLOB" property="barcodeClob" jdbcType="CLOB" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    WIP_BARCODE_ID, ORGANIZATION_ID, WIP_ENTITY_ID, PRIMARY_ITEM_ID, BARCODE_TYPE, BARCODE_TEXT, 
+    SUBINVENTORY_CODE, LOCATTION_CODE, START_QUANTITY, ONHAND_QUANTITY, PACKING_FLAG, 
+    STATUS_CODE, LAST_UPDATE_DATE, LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+  </sql>
+  <sql id="Blob_Column_List" >
+    BARCODE_CLOB
+  </sql>
+  <select id="selectByExampleWithBLOBs" resultMap="ResultMapWithBLOBs" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodesCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from MES_WIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodesCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MES_WIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodesCriteria" >
+    delete from MES_WIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodes" >
+    insert into MES_WIP_BARCODES (WIP_BARCODE_ID, ORGANIZATION_ID, WIP_ENTITY_ID, 
+      PRIMARY_ITEM_ID, BARCODE_TYPE, BARCODE_TEXT, 
+      SUBINVENTORY_CODE, LOCATTION_CODE, START_QUANTITY, 
+      ONHAND_QUANTITY, PACKING_FLAG, STATUS_CODE, 
+      LAST_UPDATE_DATE, LAST_UPDATED_BY, CREATION_DATE, 
+      CREATED_BY, BARCODE_CLOB)
+    values (#{wipBarcodeId,jdbcType=DECIMAL}, #{organizationId,jdbcType=DECIMAL}, #{wipEntityId,jdbcType=DECIMAL}, 
+      #{primaryItemId,jdbcType=DECIMAL}, #{barcodeType,jdbcType=VARCHAR}, #{barcodeText,jdbcType=VARCHAR}, 
+      #{subinventoryCode,jdbcType=VARCHAR}, #{locattionCode,jdbcType=VARCHAR}, #{startQuantity,jdbcType=DECIMAL}, 
+      #{onhandQuantity,jdbcType=DECIMAL}, #{packingFlag,jdbcType=VARCHAR}, #{statusCode,jdbcType=VARCHAR}, 
+      #{lastUpdateDate,jdbcType=DATE}, #{lastUpdatedBy,jdbcType=DECIMAL}, #{creationDate,jdbcType=DATE}, 
+      #{createdBy,jdbcType=DECIMAL}, #{barcodeClob,jdbcType=CLOB})
+  </insert>
+  <insert id="insertSelective" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodes" >
+    insert into MES_WIP_BARCODES
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="wipBarcodeId != null" >
+        WIP_BARCODE_ID,
+      </if>
+      <if test="organizationId != null" >
+        ORGANIZATION_ID,
+      </if>
+      <if test="wipEntityId != null" >
+        WIP_ENTITY_ID,
+      </if>
+      <if test="primaryItemId != null" >
+        PRIMARY_ITEM_ID,
+      </if>
+      <if test="barcodeType != null" >
+        BARCODE_TYPE,
+      </if>
+      <if test="barcodeText != null" >
+        BARCODE_TEXT,
+      </if>
+      <if test="subinventoryCode != null" >
+        SUBINVENTORY_CODE,
+      </if>
+      <if test="locattionCode != null" >
+        LOCATTION_CODE,
+      </if>
+      <if test="startQuantity != null" >
+        START_QUANTITY,
+      </if>
+      <if test="onhandQuantity != null" >
+        ONHAND_QUANTITY,
+      </if>
+      <if test="packingFlag != null" >
+        PACKING_FLAG,
+      </if>
+      <if test="statusCode != null" >
+        STATUS_CODE,
+      </if>
+      <if test="lastUpdateDate != null" >
+        LAST_UPDATE_DATE,
+      </if>
+      <if test="lastUpdatedBy != null" >
+        LAST_UPDATED_BY,
+      </if>
+      <if test="creationDate != null" >
+        CREATION_DATE,
+      </if>
+      <if test="createdBy != null" >
+        CREATED_BY,
+      </if>
+      <if test="barcodeClob != null" >
+        BARCODE_CLOB,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="wipBarcodeId != null" >
+        #{wipBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="organizationId != null" >
+        #{organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="wipEntityId != null" >
+        #{wipEntityId,jdbcType=DECIMAL},
+      </if>
+      <if test="primaryItemId != null" >
+        #{primaryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="barcodeType != null" >
+        #{barcodeType,jdbcType=VARCHAR},
+      </if>
+      <if test="barcodeText != null" >
+        #{barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="subinventoryCode != null" >
+        #{subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="locattionCode != null" >
+        #{locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="startQuantity != null" >
+        #{startQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="onhandQuantity != null" >
+        #{onhandQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="packingFlag != null" >
+        #{packingFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="statusCode != null" >
+        #{statusCode,jdbcType=VARCHAR},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="lastUpdatedBy != null" >
+        #{lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="creationDate != null" >
+        #{creationDate,jdbcType=DATE},
+      </if>
+      <if test="createdBy != null" >
+        #{createdBy,jdbcType=DECIMAL},
+      </if>
+      <if test="barcodeClob != null" >
+        #{barcodeClob,jdbcType=CLOB},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.egdfrm.unit.model.standard.MesWipBarcodesCriteria" resultType="java.lang.Integer" >
+    select count(*) from MES_WIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update MES_WIP_BARCODES
+    <set >
+      <if test="record.wipBarcodeId != null" >
+        WIP_BARCODE_ID = #{record.wipBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.organizationId != null" >
+        ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.wipEntityId != null" >
+        WIP_ENTITY_ID = #{record.wipEntityId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.primaryItemId != null" >
+        PRIMARY_ITEM_ID = #{record.primaryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.barcodeType != null" >
+        BARCODE_TYPE = #{record.barcodeType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.barcodeText != null" >
+        BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="record.subinventoryCode != null" >
+        SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.locattionCode != null" >
+        LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.startQuantity != null" >
+        START_QUANTITY = #{record.startQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="record.onhandQuantity != null" >
+        ONHAND_QUANTITY = #{record.onhandQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="record.packingFlag != null" >
+        PACKING_FLAG = #{record.packingFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="record.statusCode != null" >
+        STATUS_CODE = #{record.statusCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.lastUpdateDate != null" >
+        LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="record.lastUpdatedBy != null" >
+        LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.creationDate != null" >
+        CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      </if>
+      <if test="record.createdBy != null" >
+        CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.barcodeClob != null" >
+        BARCODE_CLOB = #{record.barcodeClob,jdbcType=CLOB},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExampleWithBLOBs" parameterType="map" >
+    update MES_WIP_BARCODES
+    set WIP_BARCODE_ID = #{record.wipBarcodeId,jdbcType=DECIMAL},
+      ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      WIP_ENTITY_ID = #{record.wipEntityId,jdbcType=DECIMAL},
+      PRIMARY_ITEM_ID = #{record.primaryItemId,jdbcType=DECIMAL},
+      BARCODE_TYPE = #{record.barcodeType,jdbcType=VARCHAR},
+      BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      START_QUANTITY = #{record.startQuantity,jdbcType=DECIMAL},
+      ONHAND_QUANTITY = #{record.onhandQuantity,jdbcType=DECIMAL},
+      PACKING_FLAG = #{record.packingFlag,jdbcType=VARCHAR},
+      STATUS_CODE = #{record.statusCode,jdbcType=VARCHAR},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      BARCODE_CLOB = #{record.barcodeClob,jdbcType=CLOB}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update MES_WIP_BARCODES
+    set WIP_BARCODE_ID = #{record.wipBarcodeId,jdbcType=DECIMAL},
+      ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      WIP_ENTITY_ID = #{record.wipEntityId,jdbcType=DECIMAL},
+      PRIMARY_ITEM_ID = #{record.primaryItemId,jdbcType=DECIMAL},
+      BARCODE_TYPE = #{record.barcodeType,jdbcType=VARCHAR},
+      BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      START_QUANTITY = #{record.startQuantity,jdbcType=DECIMAL},
+      ONHAND_QUANTITY = #{record.onhandQuantity,jdbcType=DECIMAL},
+      PACKING_FLAG = #{record.packingFlag,jdbcType=VARCHAR},
+      STATUS_CODE = #{record.statusCode,jdbcType=VARCHAR},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.ShipmentMapper">
+
+    <resultMap id="ShipmentMap" type="com.egdfrm.unit.model.barcodeManagement.Shipment">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="quantity" property="quantity" jdbcType="NUMERIC"/>
+        <result column="ship_print_flag" property="ship_print_flag" jdbcType="VARCHAR"/>
+        <result column="logistics" property="logistics" jdbcType="VARCHAR"/>
+        <result column="address1" property="address1" jdbcType="VARCHAR"/>
+        <result column="packing_type" property="packing_type" jdbcType="VARCHAR"/>
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="account_name" property="account_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="ShipmentPrintMap" type="com.egdfrm.unit.model.barcodeManagement.ShipmentPrint">
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="prod_type" property="prod_type" jdbcType="VARCHAR"/>
+        <result column="quantity" property="quantity" jdbcType="NUMERIC"/>
+    </resultMap>
+
+    <!--获取数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.barcodeManagement.Shipment">
+        SELECT count(1) total FROM (
+            select barcode_text,quantity,ship_print_flag,packing_type,logistics,address1,city from apps.cux_ship_list_v
+            where 1=1 AND quantity &gt; 0
+            <if test="shipment.barcode_text != null and shipment.barcode_text != ''">
+                AND barcode_text = #{shipment.barcode_text}
+            </if>
+            <if test="shipment.ship_print_flag != null and shipment.ship_print_flag != ''">
+                AND ship_print_flag = #{shipment.ship_print_flag}
+            </if>
+            <if test="shipment.logistics != null and shipment.logistics != ''">
+                AND logistics = #{shipment.logistics}
+            </if>
+            <if test="shipment.packing_type != null and shipment.packing_type != ''">
+                AND packing_type = #{shipment.packing_type}
+            </if>
+        )
+    </select>
+
+
+    <!--发运清单条码分页查询-->
+    <select id="findPage" resultMap="ShipmentMap" parameterType="com.egdfrm.unit.model.barcodeManagement.Shipment">
+        SELECT * from (
+            SELECT rownum rnum,t.* FROM (
+                select barcode_text,quantity,ship_print_flag,packing_type,logistics,address1,city,account_name from apps.cux_ship_list_v
+                where 1=1 AND quantity &gt; 0
+                <if test="shipment.barcode_text != null and shipment.barcode_text != ''">
+                    AND barcode_text = #{shipment.barcode_text}
+                </if>
+                <if test="shipment.ship_print_flag != null and shipment.ship_print_flag != ''">
+                    AND ship_print_flag = #{shipment.ship_print_flag}
+                </if>
+                <if test="shipment.logistics != null and shipment.logistics != ''">
+                    AND logistics = #{shipment.logistics}
+                </if>
+                <if test="shipment.packing_type != null and shipment.packing_type != ''">
+                    AND packing_type = #{shipment.packing_type}
+                </if>
+            ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+    <!--根据条码查询打印数据-->
+    <select id="getCodeByData" resultMap="ShipmentPrintMap" parameterType="java.util.Arrays">
+        select * from (
+            select ms.segment1,apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type,
+            sum(mh.quantity) quantity
+            from (select level l,
+            l.packing_barcode_id,
+            l.line_barcode_id,
+            l.quantity
+            from mes.mes_packing_lines l
+            where l.packing_type &lt;&gt; 'PACK'
+            start with l.packing_barcode_id =
+            (select packing_barcode_id
+            from mes.mes_packing_headers
+            where barcode_text = #{codes})
+            connect by l.packing_barcode_id = prior l.line_barcode_id) mh,
+            apps.mtl_system_items_b ms,
+            mes.mes_wip_barcodes mb
+            where ms.organization_id = mb.organization_id
+            and ms.inventory_item_id = mb.primary_item_id
+            and mb.wip_barcode_id = mh.line_barcode_id
+            group by ms.segment1,
+            apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id)
+        ) ORDER BY prod_type
+    </select>
+
+    <!--修改打印状态-->
+    <update id="updatePrintState" parameterType="java.util.Arrays">
+        update mes.mes_packing_headers mh set ship_print_flag = 'Y' where barcode_text IN
+        <foreach collection="codes" item="code" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </update>
+
+
+
+
+
+
+
+
+
+<!--header -->
+    <resultMap id="cusHeader" type="com.egdfrm.unit.model.barcodeManagement.CusHeader">
+        <result column="customer_id" property="customer_id" jdbcType="NUMERIC"/>
+        <result column="party_number" property="party_number" jdbcType="VARCHAR"/>
+        <result column="party_name" property="party_name" jdbcType="NUMERIC"/>
+        <result column="cust_po_number" property="cust_po_number" jdbcType="VARCHAR"/>
+        <result column="sop_yh" property="sop_yh" jdbcType="VARCHAR"/>
+        <result column="sop_battery" property="sop_battery" jdbcType="VARCHAR"/>
+        <result column="sop_box" property="sop_box" jdbcType="VARCHAR"/>
+        <result column="sop_rh" property="sop_rh" jdbcType="VARCHAR"/>
+        <result column="creation_date" property="creation_date" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- customerSop NUMERIC -->
+    <resultMap id="customerSop" type="com.egdfrm.unit.model.barcodeManagement.CustomerSop">
+        <result column="type" property="type" jdbcType="NUMERIC"/>
+        <result column="customer_name" property="customer_name" jdbcType="VARCHAR"/>
+        <result column="others_type" property="others_type" jdbcType="VARCHAR"/>
+        <result column="comments" property="comments" jdbcType="VARCHAR"/>
+        <result column="file_name" property="file_name" jdbcType="VARCHAR"/>
+        <result column="file_id" property="file_id" jdbcType="NUMERIC"/>
+
+        <result column="cust_po_number" property="cust_po_number" jdbcType="VARCHAR"/>
+
+        <result column="org_id" property="org_id" jdbcType="NUMERIC"/>
+        <result column="order_number" property="order_number" jdbcType="VARCHAR"/>
+        <result column="line_num" property="line_num" jdbcType="NUMERIC"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="item" property="item" jdbcType="VARCHAR"/>
+        <result column="ordered_qty" property="ordered_qty" jdbcType="NUMERIC"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="schedule_ship_date" property="schedule_ship_date" jdbcType="VARCHAR"/>
+        <result column="item_model" property="item_model" jdbcType="VARCHAR"/>
+        <result column="makeorbuy" property="makeorbuy" jdbcType="VARCHAR"/>
+
+
+    </resultMap>
+
+    <parameterMap type="Map" id="myMap">
+        <parameter property="cust_po_number"  />
+        <parameter property="dbreturn.xStatus"  />
+        <parameter property="dbreturn.xMessage" />
+    </parameterMap>
+
+    <!--验证MO-->
+    <select id="callCheckMo" parameterMap="myMap" statementType="CALLABLE">
+        {call apps.cux_os_crm_interface_pkg.check_mo(
+        #{cust_po_number,mode=IN,jdbcType=VARCHAR},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <select id="getHeader" resultMap="cusHeader" parameterType="com.egdfrm.unit.model.barcodeManagement.CusHeader">
+       select v.*
+      from apps.cux_mes_sop_header_v v
+       where 1=1
+       and v.cust_po_number = #{cusHeader.cust_po_number}
+    </select>
+
+    <select id="getMoList" resultType="com.egdfrm.unit.model.barcodeManagement.CustomerMoRequire" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerMoRequire">
+         select  v.line_num,
+        v.t type,
+        v.customer_name,
+        v.others_type,
+        v.comments,
+        v.file_name,
+        v.file_id,
+        v.cust_po_number
+        from apps.cux_customer_sop_v v
+        where v.cust_po_number = #{customerMoRequire.cust_po_number}
+        order by v.t,v.line_num
+    </select>
+    <select id="getOrderList" resultType="com.egdfrm.unit.model.barcodeManagement.CustomerOrderRequire" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerOrderRequire">
+             select v.org_id,
+                    v.order_number,
+                    v.cust_po_number,
+                    v.line_num,
+                    v.item,
+                    v.description,
+                    v.ordered_qty,
+                    v.status,
+                    v.schedule_ship_date,
+                    v.item_model ,
+                    v.customer_model,
+                    v.logo,
+                    v.makeorbuy
+                    from apps.cux_customer_sop_so_v v
+            where v.cust_po_number = #{customerOrderRequire.cust_po_number}
+            order by v.line_num
+    </select>
+
+
+    <!--获取数据总数 MO要求-->
+    <select id="getMoCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerSop">
+        SELECT count(1) total FROM (
+          select  v.line_num,
+                   v.t type,
+                   v.customer_name,
+                   v.others_type,
+                   v.comments,
+                   v.file_name,
+                   v.file_id,
+                   v.cust_po_number
+              from apps.cux_customer_sop_v v
+            where v.cust_po_number = #{customerSop.cust_po_number}
+        )
+    </select>
+
+
+    <!--customer -MO要求-->
+    <select id="findMoPage" resultMap="customerSop" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerSop">
+        SELECT * from (
+        SELECT rownum rnum,t.* FROM (
+                select  v.line_num,
+                   v.t type,
+                   v.customer_name,
+                   v.others_type,
+                   v.comments,
+                   v.file_name,
+                   v.file_id,
+                   v.cust_po_number
+              from apps.cux_customer_sop_v v
+            where v.cust_po_number = #{customerSop.cust_po_number}
+        ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+        order by type,line_num
+    </select>
+
+    <!--获取数据总数 order -->
+    <select id="getOrderCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerSop">
+        SELECT count(1) total FROM (
+        select v.org_id,
+        v.order_number,
+        v.cust_po_number,
+        v.line_num,
+        v.item,
+        v.description,
+        v.ordered_qty,
+        v.status,
+        v.schedule_ship_date,
+        v.item_model ,
+        v.customer_model,
+        v.logo,
+        v.makeorbuy
+        from apps.cux_customer_sop_so_v v
+      where v.CUST_PO_NUMBER = #{customerSop.cust_po_number}
+
+        )
+    </select>
+
+
+    <!--customer-order 分页查询-->
+    <select id="findOrderPage" resultMap="customerSop" parameterType="com.egdfrm.unit.model.barcodeManagement.CustomerSop">
+        SELECT * from (
+        SELECT rownum rnum,t.* FROM (
+       select v.org_id,
+        v.order_number,
+        v.cust_po_number,
+        v.line_num,
+        v.item,
+        v.description,
+        v.ordered_qty,
+        v.status,
+        v.schedule_ship_date,
+        v.item_model,
+        v.customer_model,
+        v.logo,
+        v.makeorbuy
+        from apps.cux_customer_sop_so_v v
+      where v.CUST_PO_NUMBER = #{customerSop.cust_po_number}
+        ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+<!-- 取文件-->
+    <select id="getFiles" resultType="com.egdfrm.unit.model.barcodeManagement.FileData" parameterType="java.lang.String">
+            select t.file_id,
+                   t.file_name,
+                   t.file_content_type,
+                   t.file_data
+              from apps.fnd_lobs t where t.file_id=#{FILE_ID}
+    </select>
+
+
+
+</mapper>

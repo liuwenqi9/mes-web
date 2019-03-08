@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.stock.FinishedMapper">
+    
+    <resultMap id="FinishedMap" type="com.egdfrm.unit.model.stock.Finished">
+        <result column="organization_id" property="organization_id" jdbcType="NUMERIC"/>
+        <result column="subinventory_code" property="subinventory_code" jdbcType="VARCHAR"/>
+        <result column="locattion_code" property="locattion_code" jdbcType="VARCHAR"/>
+        <result column="item_no" property="item_no" jdbcType="VARCHAR"/>
+        <result column="item_desc" property="item_desc" jdbcType="VARCHAR"/>
+        <result column="prod_tpye" property="prod_tpye" jdbcType="VARCHAR"/>
+        <result column="barcode_quantity" property="barcode_quantity" jdbcType="NUMERIC"/>
+        <result column="erp_onhand_quantity" property="erp_onhand_quantity" jdbcType="NUMERIC"/>
+        <result column="mo_order" property="mo_order" jdbcType="VARCHAR"/>
+        <result column="pack_count" property="pack_count" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.Finished">
+        select count(1) count from apps.mes_wip_barcodes_onhand_v WHERE 1 = 1
+        <if test="finished.subinventory_code != null and finished.subinventory_code != ''">
+            and subinventory_code = #{finished.subinventory_code}
+        </if>
+        <if test="finished.locattion_code != null and finished.locattion_code != ''">
+            and locattion_code = #{finished.locattion_code}
+        </if>
+        <if test="finished.item_no != null and finished.item_no != ''">
+            and item_no = #{finished.item_no}
+        </if>
+        <if test="finished.mo_order != null and finished.mo_order != ''">
+            and mo_order = #{finished.mo_order}
+        </if>
+    </select>
+
+    <!--成品库存分页查询-->
+    <select id="findPage" resultMap="FinishedMap" parameterType="com.egdfrm.unit.model.stock.Finished">
+        select * from (
+        select rownum rnum,subinventory_code,locattion_code,item_no,item_desc,prod_tpye,barcode_quantity,erp_onhand_quantity,mo_order,pack_count
+        from apps.mes_wip_barcodes_onhand_v
+        where 1 = 1
+        <if test="finished.subinventory_code != null and finished.subinventory_code != ''">
+            and subinventory_code = #{finished.subinventory_code}
+        </if>
+        <if test="finished.locattion_code != null and finished.locattion_code != ''">
+            and locattion_code = #{finished.locattion_code}
+        </if>
+        <if test="finished.item_no != null and finished.item_no != ''">
+            and item_no = #{finished.item_no}
+        </if>
+        <if test="finished.mo_order != null and finished.mo_order != ''">
+            and mo_order = #{finished.mo_order}
+        </if>
+        AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY subinventory_code,locattion_code,item_no
+    </select>
+
+    <!--查询所有数据-->
+    <select id="getAll" resultMap="FinishedMap" parameterType="com.egdfrm.unit.model.stock.Finished">
+        SELECT * FROM apps.mes_wip_barcodes_onhand_v
+        where 1 = 1
+        <if test="finished.subinventory_code != null and finished.subinventory_code != ''">
+            and subinventory_code = #{finished.subinventory_code}
+        </if>
+        <if test="finished.locattion_code != null and finished.locattion_code != ''">
+            and locattion_code = #{finished.locattion_code}
+        </if>
+        <if test="finished.item_no != null and finished.item_no != ''">
+            and item_no = #{finished.item_no}
+        </if>
+        <if test="finished.mo_order != null and finished.mo_order != ''">
+            and mo_order = #{finished.mo_order}
+        </if>
+    </select>
+
+    <!--获取子库分页查询总数-->
+    <select id="getZKByCount" resultType="java.lang.Long" parameterType="java.lang.String">
+        select count(1) count from apps.mtl_subinventories_all_v t
+        where nvl(t.disable_date, sysdate + 1) &gt; sysdate
+        <if test="id != null and id != ''">
+            and t.secondary_inventory_name LIKE '%'||#{id,javaType=String}||'%'
+        </if>
+    </select>
+
+    <!--子库分页查询-->
+    <select id="getZKByPage" resultType="java.util.Map">
+        select id,name from (
+            select rownum rnum,t.secondary_inventory_name id,t.description name from apps.mtl_subinventories_all_v t
+            where nvl(t.disable_date, sysdate + 1) > sysdate
+            <if test="id != null and id != ''">
+                and t.secondary_inventory_name LIKE '%'||#{id,javaType=String}||'%'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY id
+    </select>
+
+    <!--获取货位分页查询总数-->
+    <select id="getHWByCount" resultType="java.lang.Long">
+        select  count(1) count from mes.mes_item_locattions l
+        where nvl(l.disable_date, sysdate + 1) &gt; sysdate
+        <if test="code != null and code != ''">
+            and l.subinventory_code = #{code}
+        </if>
+        <if test="id != null and id != ''">
+            and l.locattion_code LIKE '%'||#{id,javaType=String}||'%'
+        </if>
+    </select>
+
+    <!--货位分页查询-->
+    <select id="getHWByPage" resultType="java.util.Map">
+        select id from (
+            select rownum rnum,l.locattion_code id from mes.mes_item_locattions l
+            where nvl(l.disable_date, sysdate + 1) &gt; sysdate
+            <if test="code != null and code != ''">
+                and l.subinventory_code = #{code}
+            </if>
+            <if test="id != null and id != ''">
+                and l.locattion_code LIKE '%'||#{id,javaType=String}||'%'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY id
+    </select>
+</mapper>

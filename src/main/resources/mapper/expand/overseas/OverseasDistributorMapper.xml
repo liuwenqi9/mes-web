@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.overseas.OverseasDistributorMapper" >
+ 
+  
+  <parameterMap type="Map" id="crmRetMap"> 
+    <parameter property="bat_id" />
+    <parameter property="status" />
+    <parameter property="message" />
+  </parameterMap>
+  
+   <!-- 更新Customer 的状态 -->
+<!--  <select id="getCustomer" parameterMap="java.lang.Map" statementType="CALLABLE">
+	{call apps.cux_crm_interface.unactive_customer(
+	  #{customer_id,mode=IN,jdbcType=DECIMAL},
+	  #{customer_status,mode=IN,jdbcType=VARCHAR},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>-->
+
+	<!-- ERP  手动刷新所有接口 -->
+	<select id="callOsAllInterface" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.all_interface()}
+	</select>
+
+	<!-- 刷新客户信息 -->
+	<select id="callGetCustomer" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_customer(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新客户地点 -->
+	<select id="callGetCustomerSite" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_customer_site(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新价目表 -->
+	<select id="callGetPriceList" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_price_list(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 销售人员-->
+	<select id="callGetSalesreps" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_salesreps(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 物料信息 -->
+	<select id="callGetItem" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_item(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 销售规则 -->
+	<select id="callGetItemRule" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_item_rule(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 付款条件 -->
+	<select id="callGetPayment" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_payment(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 发运明细 -->
+	<select id="callGetShipment" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_shipment(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 发票头 -->
+	<select id="callGetCustomerArHeader" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_customer_ar_header(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+	<!-- 刷新 发票行 -->
+	<select id="callGetCustomerArLine" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_customer_ar_line(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+	<!-- 刷新 订单修改 -->
+	<select id="callGetOverseasOrderChange" parameterMap="crmRetMap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.get_order_change(
+		#{bat_id,mode=OUT,jdbcType=DECIMAL},
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+
+
+
+
+	<!-- 获取客户-->
+	<select id="getCustomer"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_CUSTOMER T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写客户状态-->
+	<update id="updateCustomer" >
+		UPDATE APPS.CUX_OS_CUSTOMER T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取客户地点-->
+	<select id="getCustomerSite"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_CUSTOMER_SITE T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写客户地点状态-->
+	<update id="updateCustomerSite" >
+		UPDATE APPS.CUX_OS_CUSTOMER_SITE T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取海外价目表-->
+	<select id="getPriceList"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_PRICE_LIST T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写海外价目表状态-->
+	<update id="updatePriceList" >
+		UPDATE APPS.CUX_OS_PRICE_LIST T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取销售员-->
+	<select id="getSaleSreps"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_SALESREPS T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写销售员状态-->
+	<update id="updateSaleSreps" >
+		UPDATE APPS.CUX_OS_SALESREPS T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取物料-->
+	<select id="getItems"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_ITEMS T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写物料状态-->
+	<update id="updateItems" >
+		UPDATE APPS.CUX_OS_ITEMS T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取销售规则表-->
+	<select id="getItemCustomerRule"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_ITEM_CUSTOMER_RULE T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写售规则表状态-->
+	<update id="updateItemCustomerRule" >
+		UPDATE APPS.CUX_OS_ITEM_CUSTOMER_RULE T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取付款条件 -->
+	<select id="getPaymentTerms"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_PAYMENT_TERMS T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写付款条件 状态-->
+	<update id="updatePaymentTerms" >
+		UPDATE APPS.CUX_OS_PAYMENT_TERMS T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 保存订单头-->
+	<insert id="saveOrderHeader"  parameterType="com.egdfrm.unit.model.ws.OsOrders">
+	INSERT INTO APPS.CUX_OS_ORDER_HEADER H (
+	   H.CRM_ORDER_NUMBER,
+       H.ERP_ORDER_NUMBER,
+       H.PROCESS_STATUS,
+       H.ERR_MESSAGES,
+       H.ORG_ID,
+       H.ORDER_SOURCE_ID,
+		<if test="order_date!=null and order_date!=''">H.ORDER_DATE,</if>
+
+       H.ORDER_TYPE,
+       H.SALESREP_ID,
+       H.SOLD_TO_ORG_ID,
+       H.SOLD_FROM_ORG_ID,
+       H.SHIP_TO_ORG_ID,
+       H.TRANSACTIONAL_CURR_CODE,
+       H.BOOKED_FLAG,
+       H.CUSTOMER_PO,
+       H.REMARK,
+       H.PRICE_LIST_ID,
+       H.SHIP_METHOD,
+       H.COUNTRY,
+       H.ADDRESS,
+       H.FOB,
+       H.SHIP_ORG,
+       H.PAYMENT_TERM,
+       H.CONTACTS_NAME,
+       H.PHONE,
+       H.TRANSFER_FLAG
+		<if test="creation_time!=null and creation_time!=''">,H.creation_time</if>
+		<if test="pi_number!=null and pi_number!=''">,H.pi_number</if>
+		<if test="po_number!=null and po_number!=''">,H.po_number</if>
+		)
+       VALUES (
+				#{crm_order_number,jdbcType=VARCHAR},
+				#{erp_order_number,jdbcType=DECIMAL},
+				#{process_status,jdbcType=DECIMAL},
+				#{err_messages,jdbcType=VARCHAR},
+				#{org_id,jdbcType=DECIMAL},
+				#{order_source_id,jdbcType=DECIMAL},
+				<if test="order_date!=null and order_date!=''">
+					to_date(#{order_date} , 'yyyy-mm-dd hh24:mi:ss'),
+				</if>
+				#{order_type,jdbcType=VARCHAR},
+				#{salesrep_id,jdbcType=DECIMAL},
+				#{sold_to_org_id,jdbcType=DECIMAL},
+				#{sold_from_org_id,jdbcType=DECIMAL},
+				#{ship_to_org_id,jdbcType=DECIMAL},
+				#{transactional_curr_code,jdbcType=VARCHAR},
+				#{booked_flag,jdbcType=VARCHAR},
+				#{customer_po,jdbcType=VARCHAR},
+				#{remark,jdbcType=VARCHAR},
+				#{price_list_id,jdbcType=DECIMAL},
+				#{ship_method,jdbcType=VARCHAR},
+				#{country,jdbcType=VARCHAR},
+				#{address,jdbcType=VARCHAR},
+				#{fob,jdbcType=VARCHAR},
+				#{ship_org,jdbcType=VARCHAR},
+				#{payment_term,jdbcType=VARCHAR},
+				#{contacts_name,jdbcType=VARCHAR},
+				#{phone,jdbcType=VARCHAR},
+				#{transfer_flag,jdbcType=VARCHAR}
+				<if test="creation_time!=null and creation_time!=''">
+					,to_date(#{creation_time} , 'yyyy-mm-dd hh24:mi:ss')
+				</if>
+				<if test="pi_number!=null and pi_number!=''">
+					,#{pi_number,jdbcType=DECIMAL}
+				</if>
+				<if test="po_number!=null and po_number!=''">
+					,#{po_number,jdbcType=DECIMAL}
+				</if>
+
+				   )
+	</insert>
+	<!-- jdbcType=VARCHAR  jdbcType=DECIMAL-->
+	<!-- 保存订单行-->
+	<insert id="saveOrderLine"  parameterType="com.egdfrm.unit.model.ws.OsLine">
+	INSERT INTO  APPS.CUX_OS_ORDER_LINE L(
+	   L.CRM_ORDER_NUMBER,
+       L.ORG_ID,
+       L.LINE_NUMBER,
+       L.ORDER_SOURCE_ID,
+       L.INVENTORY_ITEM_ID,
+       L.ORDER_QUANTITY,
+       L.ORDER_QUANTITY_UOM,
+       L.UNIT_LIST_PRIC,
+       L.UNIT_SELLING_PRIC,
+       L.SHIP_ORG,
+       L.BOOKED_FLAG,
+       L.LINE_REMARKS,
+       L.PROCESS_STATUS,
+       L.TRANSFER_FLAG
+		<if test="required_date!=null and required_date!=''">
+			,L.REQUIRED_DATE
+		</if>
+		<if test="row_mo!=null and row_mo!=''">
+			,L.CUSTOMER_PO
+		</if>
+
+
+		)
+       	VALUES (
+		#{crm_order_number,jdbcType=VARCHAR},
+		#{org_id,jdbcType=DECIMAL},
+		#{line_number,jdbcType=VARCHAR},
+		#{order_source_id,jdbcType=DECIMAL},
+		#{inventory_item_id,jdbcType=DECIMAL},
+		#{order_quantity,jdbcType=DECIMAL},
+		#{order_quantity_uom,jdbcType=VARCHAR},
+		#{unit_list_pric,jdbcType=DECIMAL},
+		#{unit_selling_pric,jdbcType=DECIMAL},
+		#{ship_org,jdbcType=VARCHAR},
+		#{booked_flag,jdbcType=VARCHAR},
+		#{line_remarks,jdbcType=VARCHAR},
+		#{process_status,jdbcType=VARCHAR},
+		#{transfer_flag,jdbcType=VARCHAR}
+		<if test="required_date!=null and required_date!=''">
+		,to_date(#{required_date} , 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="row_mo!=null and row_mo!=''">
+			,#{row_mo}
+		</if>
+		)
+	</insert>
+	<parameterMap type="Map" id="osmap">
+		<parameter property="crmOrderNumber" />
+		<parameter property="status" />
+		<parameter property="message" />
+	</parameterMap>
+	<!-- ERP OS 销售订单 -->
+	<select id="callOsSetOrder" parameterMap="osmap" statementType="CALLABLE">
+		{call apps.CUX_OS_CRM_INTERFACE_PKG.set_order(
+		#{crmOrderNumber,mode=IN,jdbcType=VARCHAR},
+		#{status,mode=OUT,jdbcType=VARCHAR},
+		#{message,mode=OUT,jdbcType=VARCHAR}
+		)}
+	</select>
+	<!--取订单头-->
+	<select id="getOrderHeader" resultType="map" parameterType="com.egdfrm.unit.model.ws.OsOrders" >
+		SELECT * FROM APPS.CUX_OS_ORDER_HEADER H WHERE H.CRM_ORDER_NUMBER =#{crm_order_number,jdbcType=VARCHAR}
+	</select>
+	<!--删除订单头-->
+	<delete id="deleteOrderHeader" parameterType="com.egdfrm.unit.model.ws.OsOrders" >
+		DELETE APPS.CUX_OS_ORDER_HEADER H WHERE H.CRM_ORDER_NUMBER =#{crm_order_number,jdbcType=VARCHAR}
+	</delete>
+	<!-- 删除订单行-->
+	<delete id="deleteOrderLine" parameterType="com.egdfrm.unit.model.ws.OsLine">
+		DELETE APPS.CUX_OS_ORDER_LINE L WHERE L.CRM_ORDER_NUMBER =#{crm_order_number,jdbcType=VARCHAR}
+	</delete>
+
+	<!-- 获取海外发运-->
+	<select id="getShipmentDetail"  resultType="map">
+		SELECT * FROM APPS.CUX_OS_SHIPMENT_DETAIL T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写海外发运-状态-->
+	<update id="updateShipmentDetail" >
+		UPDATE APPS.CUX_OS_SHIPMENT_DETAIL T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+
+	<!-- 获取海外发票头 -->
+	<select id="getOverseasInvoiceHeader"  resultType="map">
+		SELECT * FROM APPS.cux_ar_header_his T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写海外发票头状态-->
+	<update id="updateOverseasInvoiceHeaderStatus" >
+		UPDATE APPS.cux_ar_header_his T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+	<!-- 获取海外发票行-->
+	<select id="getOverseasInvoiceLine"  resultType="map">
+		SELECT * FROM APPS.cux_ar_line_his T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写海外发票行-状态-->
+	<update id="updateOverseasInvoiceLineStatus" >
+		UPDATE APPS.cux_ar_line_his T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+	<!-- 获取 订单修改，取消-->
+	<select id="getOverseasOrderChange"  resultType="map">
+		SELECT * FROM APPS.cux_os_order_change T WHERE 1=1 AND  NVL(T.TRANSFER_FLAG,'N') = 'N'
+	</select>
+	<!-- 回写 订单修改，取消-状态-->
+	<update id="updateOverseasOrderChangeStatus" >
+		UPDATE APPS.cux_os_order_change T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+	</update>
+
+</mapper>

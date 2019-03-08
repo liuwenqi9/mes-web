@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.BigPackingMapper">
+    <!--NUMERIC  VARCHAR-->
+    <resultMap id="bigPackingMap" type="com.egdfrm.unit.model.barcodeManagement.BigPacking">
+        <result column="big_packing_barcode_id" property="big_packing_barcode_id" jdbcType="NUMERIC"/>
+        <result column="big_barcode_text" property="big_barcode_text" jdbcType="VARCHAR"/>
+        <result column="big_pack_quantity" property="big_pack_quantity" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--打印模板orm-->
+    <resultMap id="bigPackingPrintMap" type="com.egdfrm.unit.model.barcodeManagement.BigPackingPrint">
+        <result column="big_packing_barcode_id" property="big_packing_barcode_id" jdbcType="NUMERIC"/>
+        <result column="big_barcode_text" property="big_barcode_text" jdbcType="VARCHAR"/>
+        <result column="big_pack_quantity" property="big_pack_quantity" jdbcType="VARCHAR"/>
+        <result column="small_packing_barcode_id" property="small_packing_barcode_id" jdbcType="NUMERIC"/>
+        <result column="small_barcode_text" property="small_barcode_text" jdbcType="VARCHAR"/>
+        <result column="small_pack_quantity" property="small_pack_quantity" jdbcType="VARCHAR"/>
+        <result column="small_prod_type" property="small_prod_type" jdbcType="VARCHAR"/>
+        <result column="small_segment1" property="small_segment1" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--获取数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.barcodeManagement.BigPacking">
+        SELECT count(1) total FROM (
+                select distinct h.packing_barcode_id big_packing_barcode_id,
+                h.barcode_text       big_barcode_text,
+                h.pack_quantity      big_pack_quantity
+                from mes.mes_packing_headers h, mes.mes_packing_lines l,mes.mes_packing_headers hs,apps.mtl_system_items_b mb
+                where h.packing_barcode_id = l.packing_barcode_id
+                and l.line_barcode_id = hs.packing_barcode_id
+                and mb.inventory_item_id(+) = hs.inventory_item_id
+                and mb.organization_id(+)=hs.organization_id
+                and l.packing_type = 'PACK'
+                and h.packing_type = 'B_PACK'
+            <if test="bigPacking.big_barcode_text != null and bigPacking.big_barcode_text != ''">
+                AND h.barcode_text = #{bigPacking.big_barcode_text}
+            </if>
+        )
+    </select>
+
+
+    <!--大包装箱分页查询-->
+    <select id="findPage" resultMap="bigPackingMap" parameterType="com.egdfrm.unit.model.barcodeManagement.BigPacking">
+        SELECT * from (
+            SELECT rownum rnum,t.* FROM (
+                    select distinct h.packing_barcode_id big_packing_barcode_id,
+                    h.barcode_text       big_barcode_text,
+                    h.pack_quantity      big_pack_quantity
+                    from mes.mes_packing_headers h, mes.mes_packing_lines l,mes.mes_packing_headers hs,apps.mtl_system_items_b mb
+                    where h.packing_barcode_id = l.packing_barcode_id
+                    and l.line_barcode_id = hs.packing_barcode_id
+                    and mb.inventory_item_id(+) = hs.inventory_item_id
+                    and mb.organization_id(+)=hs.organization_id
+                    and l.packing_type = 'PACK'
+                    and h.packing_type = 'B_PACK'
+                    <if test="bigPacking.big_barcode_text != null and bigPacking.big_barcode_text != ''">
+                        AND h.barcode_text = #{bigPacking.big_barcode_text}
+                    </if>
+         ORDER BY h.barcode_text DESC
+            ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    <select id="findDetail" resultMap="bigPackingPrintMap" parameterType="String">
+        select h.packing_barcode_id big_packing_barcode_id,
+                h.barcode_text       big_barcode_text,
+                h.pack_quantity      big_pack_quantity,
+                hs.packing_barcode_id small_packing_barcode_id,
+                hs.barcode_text      small_barcode_text,
+                hs.pack_quantity      small_pack_quantity,
+                mb.segment1 small_segment1,
+                apps.mes_barcodes_pd_pkg.get_prod_type(mb.inventory_item_id) small_prod_type
+                from mes.mes_packing_headers h, mes.mes_packing_lines l,mes.mes_packing_headers hs,apps.mtl_system_items_b mb
+                where h.packing_barcode_id = l.packing_barcode_id
+                and l.line_barcode_id = hs.packing_barcode_id
+                and mb.inventory_item_id(+) = hs.inventory_item_id
+                and mb.organization_id(+)=hs.organization_id
+                and l.packing_type = 'PACK'
+                and h.packing_type = 'B_PACK'
+                <if test="id != null and id!= ''">
+                    AND h.packing_barcode_id = #{id}
+                </if>
+    </select>
+
+</mapper>

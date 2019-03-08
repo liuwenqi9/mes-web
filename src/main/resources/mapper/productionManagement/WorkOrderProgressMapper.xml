@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.WorkOrderProgressMapper">
+
+    <!--获取产品条码列表_总数据条数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(*) total from apps.mes_wip_discrete_jobs_v
+        WHERE 1 = 1
+        <if test="wop.workOrderNumber != null and wop.workOrderNumber != ''">
+            AND WIP_ENTITY_NAME = #{wop.workOrderNumber}
+        </if>
+        <if test="wop.productionLine != null and wop.productionLine != ''">
+            AND PLAN_LINE_CODE = #{wop.productionLine}
+        </if>
+        <if test="wop.parts != null and wop.parts != ''">
+            AND ITEM_NO = #{wop.parts}
+        </if>
+         <if test="wop.wipStatus != null and wop.wipStatus != ''">
+                AND wip_status = #{wop.wipStatus}
+         </if>
+        <if test="wop.moCode != null and wop.moCode != ''">
+            AND MO_ORDER = #{wop.moCode}
+        </if>
+        <if test="wop.startTime != null and wop.startTime != ''">
+            AND SCHEDULED_START_DATE &gt;= #{wop.startTime}
+        </if>
+        <if test="wop.endTime != null and wop.endTime != ''">
+            AND SCHEDULED_START_DATE &lt;= #{wop.endTime}
+        </if>
+        <!-- <if test="wop.realStartTime != null and wop.realStartTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.realStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.realEndTime != null and wop.realEndTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.realEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> -->
+        <if test="wop.MOStartTime != null and wop.MOStartTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.MOStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.MOEndTime != null and wop.MOEndTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.MOEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> 
+    </select>
+
+
+    <!--获取产品条码列表-->
+    <select id="getwrokOrderList" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT WIP_ENTITY_NAME,MO_ORDER,ITEM_NO,PLAN_LINE_CODE,DESCRIPTION,START_QUANTITY,PROD_QUANTITY,INV_QUANTITY,WIP_STATUS,PROD_TYPE,SCHEDULED_START_DATE,p_quantity,e_quantity,min_transaction_date,ATTRIBUTE4 from (
+            SELECT ROWNUM rnum,WIP_ENTITY_NAME,MO_ORDER,ITEM_NO,PLAN_LINE_CODE,DESCRIPTION,START_QUANTITY,PROD_QUANTITY,INV_QUANTITY,WIP_STATUS,PROD_TYPE,SCHEDULED_START_DATE
+            ,p_quantity,e_quantity,min_transaction_date,to_char(to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd') ATTRIBUTE4
+            FROM APPS.MES_WIP_DISCRETE_JOBS_V WHERE 1 = 1
+            <if test="wop.workOrderNumber != null and wop.workOrderNumber != ''">
+                AND WIP_ENTITY_NAME = #{wop.workOrderNumber}
+            </if>
+            <if test="wop.productionLine != null and wop.productionLine != ''">
+                AND PLAN_LINE_CODE = #{wop.productionLine}
+            </if>
+            <if test="wop.parts != null and wop.parts != ''">
+                AND ITEM_NO = #{wop.parts}
+            </if>
+             <if test="wop.wipStatus != null and wop.wipStatus != ''">
+                AND wip_status = #{wop.wipStatus}
+            </if>
+            <if test="wop.moCode != null and wop.moCode != ''">
+                AND MO_ORDER = #{wop.moCode}
+            </if>
+            <if test="wop.startTime != null and wop.startTime != ''">
+            AND SCHEDULED_START_DATE &gt;= #{wop.startTime}
+        </if>
+        <if test="wop.endTime != null and wop.endTime != ''">
+            AND SCHEDULED_START_DATE &lt;= #{wop.endTime}
+        </if>
+        <!-- <if test="wop.realStartTime != null and wop.realStartTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.realStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.realEndTime != null and wop.realEndTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.realEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> -->
+        <if test="wop.MOStartTime != null and wop.MOStartTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.MOStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.MOEndTime != null and wop.MOEndTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.MOEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> 
+            AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    
+    <resultMap id="excelModel" type="com.egdfrm.unit.excelmodel.WorkOrderProgressExcel">
+	        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+	        <result column="mo_order" property="mo_order" jdbcType="VARCHAR"/>
+	        <result column="plan_line_code" property="plan_line_code" jdbcType="VARCHAR"/>
+	        <result column="item_no" property="item_no" jdbcType="NUMERIC"/>
+	        <result column="start_quantity" property="start_quantity" jdbcType="NUMERIC"/>
+	        <result column="prod_quantity" property="prod_quantity" jdbcType="NUMERIC"/>
+	        <result column="inv_quantity" property="inv_quantity" jdbcType="NUMERIC"/> 
+	        <result column="wip_status" property="wip_status" jdbcType="VARCHAR"/> 
+	         <result column="inv_quantity" property="inv_quantity" jdbcType="NUMERIC"/> 
+	        <result column="p_quantity" property="p_quantity" jdbcType="VARCHAR"/> 
+	        <result column="e_quantity" property="e_quantity" jdbcType="VARCHAR"/>
+	        <result column="scheduled_start_date" property="scheduled_start_date" jdbcType="VARCHAR"/>
+	        <result column="min_transaction_date" property="min_transaction_date" jdbcType="VARCHAR"/>  
+	        <result column="description" property="description" jdbcType="VARCHAR"/> 
+	        <result column="ATTRIBUTE4" property="ATTRIBUTE4" jdbcType="VARCHAR"/> 
+	    </resultMap>   
+	    
+    <!-- 导出excel工单进度列表 -->
+     <select id="exportExcel" resultMap="excelModel" parameterType="java.util.Map">
+         SELECT WIP_ENTITY_NAME,MO_ORDER,ITEM_NO,PLAN_LINE_CODE,DESCRIPTION,START_QUANTITY,PROD_QUANTITY,INV_QUANTITY,WIP_STATUS,PROD_TYPE,SCHEDULED_START_DATE
+            ,p_quantity,e_quantity,min_transaction_date,to_char(to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd') ATTRIBUTE4
+            FROM APPS.MES_WIP_DISCRETE_JOBS_V WHERE 1 = 1
+            <if test="wop.workOrderNumber != null and wop.workOrderNumber != ''">
+                AND WIP_ENTITY_NAME = #{wop.workOrderNumber}
+            </if>
+            <if test="wop.productionLine != null and wop.productionLine != ''">
+                AND PLAN_LINE_CODE = #{wop.productionLine}
+            </if>
+            <if test="wop.parts != null and wop.parts != ''">
+                AND ITEM_NO = #{wop.parts}
+            </if>
+            <if test="wop.wipStatus != null and wop.wipStatus != ''">
+                AND wip_status = #{wop.wipStatus}
+            </if>
+            <if test="wop.moCode != null and wop.moCode != ''">
+                AND MO_ORDER = #{wop.moCode}
+            </if>
+            <if test="wop.startTime != null and wop.startTime != ''">
+            AND SCHEDULED_START_DATE &gt;= #{wop.startTime}
+        </if>
+        <if test="wop.endTime != null and wop.endTime != ''">
+            AND SCHEDULED_START_DATE &lt;= #{wop.endTime}
+        </if>
+        <!-- <if test="wop.realStartTime != null and wop.realStartTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.realStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.realEndTime != null and wop.realEndTime != ''">
+            AND to_date(min_transaction_date,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.realEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> -->
+        <if test="wop.MOStartTime != null and wop.MOStartTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{wop.MOStartTime}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="wop.MOEndTime != null and wop.MOEndTime != ''">
+            AND to_date(ATTRIBUTE4,'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{wop.MOEndTime}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+        </if> 
+    </select>
+
+    <!--获取生产线-->
+    <select id="getLines" resultType="java.util.Map">
+       select flex_value,description from apps.fnd_flex_values_vl where flex_value_set_id = 1011484
+    </select>
+
+    <!--获取装配件总数-->
+    <select id="getPartsByCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(*) count
+        from apps.mtl_system_items_b ms
+        where substr(ms.segment1, 1, 2) in ('18', '19')
+        and ms.inventory_item_status_code &lt;&gt; 'Inactive'
+        and ms.organization_id = 101
+        <if test="map.parts != null and map.parts != ''">
+          and segment1 LIKE '%'||#{map.parts}||'%'
+        </if>
+    </select>
+
+    <!--获取装配件-->
+    <select id="getPartsByPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT wip_entity_name,description FROM  (
+            select ROWNUM rnum,segment1 wip_entity_name,description
+            from apps.mtl_system_items_b ms
+            where substr(ms.segment1, 1, 2) in ('18', '19')
+            and ms.inventory_item_status_code &lt;&gt; 'Inactive'
+            and ms.organization_id = 101
+            <if test="map.parts != null and map.parts != ''">
+                and segment1 LIKE '%'||#{map.parts}||'%'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+</mapper>

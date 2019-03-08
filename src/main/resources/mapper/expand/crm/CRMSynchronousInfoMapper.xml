@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.crm.CRMSynchronousInfoMapper" >
+ 
+  
+  <parameterMap type="Map" id="crmRetMap"> 
+    <parameter property="bat_id" />
+    <parameter property="status" />
+    <parameter property="message" />
+    <parameter property="customer_id" />
+    <parameter property="customer_status" />
+  </parameterMap>
+  
+   <!-- 更新Customer 的状态 -->
+  <select id="updateERPCustomerStatus" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.unactive_customer(
+	  #{customer_id,mode=IN,jdbcType=DECIMAL},
+	  #{customer_status,mode=IN,jdbcType=VARCHAR},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  
+  <!-- 插入客户信息中间表 -->
+  <select id="callGetCustomer" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_customer(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入收货方信息中间表 -->
+  <select id="callGetCustomerBuyer" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_customer_buyer(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入价目表中间表 -->
+  <select id="callGetPricList" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_pric_list(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入销售员信息中间表 -->
+  <select id="callGetSalesreps" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_salesreps(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入物料主数据中间表 -->
+  <select id="callGetItem" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_item(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入专供信息中间表 -->
+  <select id="callGetItemExclusively" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_item_exclusively(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入优利德库存查询（实时接口）中间表 -->
+  <select id="callGetInbentory" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_inventory(
+	  #{item_id,mode=IN,jdbcType=DECIMAL},
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 插入订单中间表 -->
+  <select id="callGetOrderVerification" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.get_order_verification(
+	  #{bat_id,mode=OUT,jdbcType=DECIMAL},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- ERP销售订单 -->
+  <select id="callSetOrder" parameterMap="crmRetMap" statementType="CALLABLE">
+	{call apps.cux_crm_interface.set_order(
+	  #{crmOrderNumber,mode=IN,jdbcType=VARCHAR},
+	  #{status,mode=OUT,jdbcType=VARCHAR},
+	  #{message,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- 获取发运条码主表 -->
+  <!-- 获取发运条码明细 -->
+  
+  <!-- 获取客户信息 -->
+  <select id="synchronousCuxCustomer"  resultType="map">
+	SELECT * FROM APPS.CUX_CUSTOMER
+  </select> 
+  <!-- 获取收货方信息 -->
+  <select id="synchronousCuxCustomerReceivingParty"  resultType="map">
+	SELECT * FROM APPS.CUX_CUSTOMER_RECEIVING_PARTY
+  </select> 
+  <!-- 获取价目表 -->
+  <select id="synchronousCuxPricList"  resultType="map">
+	SELECT * FROM APPS.CUX_PRIC_LIST
+  </select> 
+  <!-- 获取销售员信息 -->
+  <select id="synchronousCuxSalesreps"  resultType="map">
+	SELECT * FROM APPS.CUX_SALESREPS
+  </select> 
+  <!-- 获取物料主数据 -->
+  <select id="synchronousCuxItem"  resultType="map">
+	SELECT * FROM APPS.CUX_ITEM T WHERE NVL(T.TRANSFER_FLAG,'N') = 'N'
+  </select> 
+  <!-- 物料主数据  修改状态 -->
+   <update id="updateSynchronousCuxItem" >
+	update APPS.CUX_ITEM T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+  </update> 
+  
+  <!-- 获取专供信息 -->
+  <select id="synchronousCuxItemExclusively"  resultType="map">
+	SELECT * FROM APPS.CUX_ITEM_EXCLUSIVELY T WHERE  NVL(T.TRANSFER_FLAG,'N') = 'N'
+  </select> 
+  
+   <!--  专供信息  修改状态-->
+  <update id="updateSynchronousCuxItemExclusively"  >
+	UPDATE  APPS.CUX_ITEM_EXCLUSIVELY T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+  </update> 
+  
+  <!-- 优利德库存查询（实时接口）  -->
+  <select id="synchronousCuxInventory"   resultType="map">
+	SELECT T.* FROM APPS.CUX_INVENTORY T
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </select> 
+  <!-- 获取订单头 -->
+  <select id="synchronousCuxOrderHeade"  resultType="map">
+	SELECT * FROM APPS.CUX_ORDER_HEADE
+  </select> 
+  <!-- 获取订单行-->
+  <select id="synchronousCuxOrderLine"  resultType="map">
+	SELECT * FROM APPS.CUX_ORDER_LINE
+  </select> 
+  <!-- 获取发运条码主表 -->
+  <select id="synchronousCuxShipmentBarCodeHeade"  resultType="map">
+	SELECT * FROM APPS.CUX_SHIPMENT_BARCODE_HEADE T WHERE  NVL(T.TRANSFER_FLAG,'N') = 'N'
+  </select> 
+  
+  <!-- update取过的 发运条码主表 -->
+  <update id="updateSynchronousCuxShipmentBarCodeHeade"  >
+	UPDATE  APPS.CUX_SHIPMENT_BARCODE_HEADE T SET T.TRANSFER_FLAG = 'Y'  WHERE 1=1
+  </update>
+  
+  <!-- 获取发运条码明细 -->
+  <select id="synchronousCuxShipmentBarCodeLine"  resultType="map">
+	SELECT * FROM APPS.CUX_SHIPMENT_BARCODE_LINE T WHERE  NVL(T.TRANSFER_FLAG,'N') = 'N'
+  </select> 
+  
+  <!-- UPDATE发运条码明细 -->
+  <update id="updateSynchronousCuxShipmentBarCodeLine"  >
+	UPDATE  APPS.CUX_SHIPMENT_BARCODE_LINE T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+  </update>
+  
+  <!-- @auth hgb 同步 CUX_ITEM_SALE_RULE 表  -->
+  <select id="synchronousCuxItemsaleRule"  resultType="map">
+	 SELECT T.INVENTORY_ITEM_ID,T.LINE_ID,T.MINIMUM_ORDER_QUANTITY,T.ITEM_TYPE2,T.OPERATION_STATUS FROM APPS.CUX_ITEM_SALE_RULE T
+  	 WHERE NVL(T.TRANSFER_FLAG,'N') = 'N'
+  </select>
+  
+  <!-- CUX_ITEM_SALE_RULE 表 修改状态  -->
+  <update id="updateSynchronousCuxItemsaleRule" >
+	 UPDATE APPS.CUX_ITEM_SALE_RULE T SET T.TRANSFER_FLAG = 'Y' WHERE 1=1
+  </update>
+  
+  <!-- @auth hgb 同步修改订单数量，订单行取消  -->
+  <select id="chageOrCancelCuxOrder"  resultType="map">
+	select oc.batch_id,oc.line_id,oc.crm_order_number, oc.INVENTORY_ITEM_ID, oc.operation_status, oc.quantity from apps.cux_order_change oc
+ 	where oc.transfer_flag = 'N'
+  </select>
+  <!-- @auth hgb 同步修改订单数量，订单行取消  (修改标志，防止多次同步)-->
+  <update id="chageOrCancelCuxOrderToUpdate">
+  update apps.cux_order_change oc set oc.transfer_flag = 'Y' where 1=1
+  </update>
+  
+  <!-- @auth hgb 同步默认地址  -->
+  <select id="synchronousPrimaryFlag"  resultType="map">
+	SELECT CU.SHIP_TO_LOCATION_ID,CU.PRIMARY_FLAG FROM APPS.CUX_CUSTOMER_RECEIVING_PARTY CU
+	 WHERE CU.TRANSFER_FLAG = 'N'
+  </select>
+  
+  <!-- @auth hgb 同步默认地址后修改标志-->
+  <update id="synchronousPrimaryFlagToUpdate" parameterType="java.lang.String">
+  UPDATE APPS.CUX_CUSTOMER_RECEIVING_PARTY CU SET CU.TRANSFER_FLAG = 'Y'
+ 	WHERE CU.SHIP_TO_LOCATION_ID=#{id}
+  </update>
+  <!-- @auth hgb @date 2017-09-25 同步发运物流信息 -->
+  <select id="synchronousShoppingLogisticsInfo"  resultType="map">
+			  select t.batch_id,
+		       t.request_number,
+		       t.source_id,
+		       t.express,
+		       t.express_number,
+		       t.last_update_date,
+		       t.operation_type,
+		       t.operation_status,
+		       t.creation_time,
+		       t.transfer_flag
+		  from apps.cux_shipping_logistics_inf t
+		 where nvl(t.transfer_flag, 'N') = 'N'
+  </select>
+  <!--@auth hgb @date 2017-09-25 同步发运物流信息  修改标志-->
+  <update id="updateShoppingLogisticsInfoToYes" parameterType="java.lang.String">
+  UPDATE apps.cux_shipping_logistics_inf t SET  t.transfer_flag = 'Y',t.LAST_UPDATE_DATE=SYSDATE
+ 	WHERE 1=1
+  </update>
+  
+  
+  <!-- 删除客户信息 -->
+  <delete id="deleteCuxCustomer" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_CUSTOMER
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除收货方信息 -->
+  <delete id="deleteCuxCustomerReceivingParty" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_CUSTOMER_RECEIVING_PARTY
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除价目表 -->
+  <delete id="deleteCuxPricList" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_PRIC_LIST
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除销售员信息 -->
+  <delete id="deleteCuxSalesreps" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_SALESREPS
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除物料主数据 -->
+  <delete id="deleteCuxItem" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_ITEM
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除专供信息 -->
+  <delete id="deleteCuxItemExclusively" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_ITEM_EXCLUSIVELY
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 优利德库存查询（实时接口） -->
+  <delete id="deleteCuxInventory" >
+	DELETE FROM APPS.CUX_INVENTORY
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除订单头 -->
+  <delete id="deleteCuxOrderHeade" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_ORDER_HEADE
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除订单行-->
+  <delete id="deleteCuxOrderLine" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_ORDER_LINE
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除发运条码主表 -->
+  <delete id="deleteCuxShipmentBarCodeHeade" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_SHIPMENT_BARCODE_HEADE
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+  <!-- 删除发运条码明细 -->
+  <delete id="deleteCuxShipmentBarCodeLine" parameterType="DECIMAL">
+	DELETE FROM APPS.CUX_SHIPMENT_BARCODE_LINE
+	 WHERE BATCH_ID= #{batchId,mode=IN,jdbcType=DECIMAL}
+  </delete> 
+</mapper>

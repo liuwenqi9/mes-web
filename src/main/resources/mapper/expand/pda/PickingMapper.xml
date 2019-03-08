@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.PickingMapper" >
+  
+   <parameterMap type="Map" id="getNumMap">
+    <parameter property="orgId"  />
+    <parameter property="invId"  />  
+   </parameterMap> 
+  <!-- 根据包装箱ID获取关联的产品数量 -->
+  <select id="getNum" parameterMap="getNumMap" resultType="com.egdfrm.unit.model.expand.pda.SaleOutStorage">
+	SELECT B.SEGMENT1 LOTNO, MC.SEGMENT2 STYLE,B.DESCRIPTION DESR
+	  FROM APPS.MTL_SYSTEM_ITEMS_B  B,
+	       APPS.MTL_ITEM_CATEGORIES MIC,
+	       APPS.MTL_CATEGORIES_V    MC
+	 WHERE 1 = 1
+	   AND MIC.INVENTORY_ITEM_ID = B.INVENTORY_ITEM_ID
+	   AND MIC.ORGANIZATION_ID = B.ORGANIZATION_ID
+	   AND B.ORGANIZATION_ID = #{orgId, jdbcType = DECIMAL}
+	   AND MIC.CATEGORY_ID = MC.CATEGORY_ID
+	   AND MIC.CATEGORY_SET_ID = 5
+	   AND B.INVENTORY_ITEM_ID = #{invId, jdbcType = DECIMAL}
+  </select>
+  
+   <parameterMap type="Map" id="checkIsBarcodeBelongMoveOrderMap">
+    <parameter property="moveOrderId"  />
+    <parameter property="barcodeId"  />
+    <parameter property="dbreturn.xStatus"  />
+    <parameter property="dbreturn.xMessage" />
+   </parameterMap> 
+   <parameterMap type="Map" id="pickMap">
+    <parameter property="userId"  />
+    <parameter property="processId"  />
+    <parameter property="moveOrderId"  />
+    <parameter property="barcodeId"  />
+    <parameter property="dbreturn.xStatus"  />
+    <parameter property="dbreturn.xMessage" />
+   </parameterMap> 
+  <!--PDA挑库-//检查搬运的货物是否是属于此搬运单 -->
+  <select id="callCheckIsBarcodeBelongMoveOrder" parameterMap="checkIsBarcodeBelongMoveOrderMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_moveorder_pkg.check_move_order( 
+	  #{moveOrderId,mode=IN,jdbcType=DECIMAL},
+	  #{barcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA挑库-循环提交 -->
+  <select id="callTranInsertTransactionTemp" parameterMap="pickMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_moveorder_pkg.tran_insert_transaction_temp( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{moveOrderId,mode=IN,jdbcType=DECIMAL}, 
+	  #{barcodeId,mode=IN,jdbcType=DECIMAL},  
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA挑库-挑库暂存 -->
+  <select id="callProcessMesTransaction" parameterMap="pickMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_moveorder_pkg.process_mes_transaction( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA挑库-挑库ESB操作 -->
+  <select id="callMesBarcodesMoveOrder" parameterMap="pickMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_moveorder_pkg.mes_barcodes_move_order( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

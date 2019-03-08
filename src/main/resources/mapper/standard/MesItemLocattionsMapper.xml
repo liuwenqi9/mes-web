@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.MesItemLocattionsMapper" >
+  <resultMap id="BaseResultMap" type="com.egdfrm.unit.model.standard.MesItemLocattions" >
+    <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+    <result column="LOCATTION_CODE" property="locattionCode" jdbcType="VARCHAR" />
+    <result column="SUBINVENTORY_CODE" property="subinventoryCode" jdbcType="VARCHAR" />
+    <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+    <result column="DISABLE_DATE" property="disableDate" jdbcType="TIMESTAMP" />
+    <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+    <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.egdfrm.unit.model.standard.MesItemLocattions" extends="BaseResultMap" >
+    <result column="BARCODE_CLOB" property="barcodeClob" jdbcType="CLOB" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    ORGANIZATION_ID, LOCATTION_CODE, SUBINVENTORY_CODE, DESCRIPTION, DISABLE_DATE, LAST_UPDATE_DATE, 
+    LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+  </sql>
+  <sql id="Blob_Column_List" >
+    BARCODE_CLOB
+  </sql>
+  <select id="selectByExampleWithBLOBs" resultMap="ResultMapWithBLOBs" parameterType="com.egdfrm.unit.model.standard.MesItemLocattionsCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from MES_ITEM_LOCATTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.egdfrm.unit.model.standard.MesItemLocattionsCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MES_ITEM_LOCATTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.unit.model.standard.MesItemLocattionsCriteria" >
+    delete from MES_ITEM_LOCATTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.egdfrm.unit.model.standard.MesItemLocattions" >
+    insert into MES_ITEM_LOCATTIONS (ORGANIZATION_ID, LOCATTION_CODE, SUBINVENTORY_CODE, 
+      DESCRIPTION, DISABLE_DATE, LAST_UPDATE_DATE, 
+      LAST_UPDATED_BY, CREATION_DATE, CREATED_BY, 
+      BARCODE_CLOB)
+    values (#{organizationId,jdbcType=DECIMAL}, #{locattionCode,jdbcType=VARCHAR}, #{subinventoryCode,jdbcType=VARCHAR}, 
+      #{description,jdbcType=VARCHAR}, #{disableDate,jdbcType=TIMESTAMP}, #{lastUpdateDate,jdbcType=TIMESTAMP}, 
+      #{lastUpdatedBy,jdbcType=DECIMAL}, #{creationDate,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=DECIMAL}, 
+      #{barcodeClob,jdbcType=CLOB})
+  </insert>
+  <insert id="insertSelective" parameterType="com.egdfrm.unit.model.standard.MesItemLocattions" >
+    insert into MES_ITEM_LOCATTIONS
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="organizationId != null" >
+        ORGANIZATION_ID,
+      </if>
+      <if test="locattionCode != null" >
+        LOCATTION_CODE,
+      </if>
+      <if test="subinventoryCode != null" >
+        SUBINVENTORY_CODE,
+      </if>
+      <if test="description != null" >
+        DESCRIPTION,
+      </if>
+      <if test="disableDate != null" >
+        DISABLE_DATE,
+      </if>
+      <if test="lastUpdateDate != null" >
+        LAST_UPDATE_DATE,
+      </if>
+      <if test="lastUpdatedBy != null" >
+        LAST_UPDATED_BY,
+      </if>
+      <if test="creationDate != null" >
+        CREATION_DATE,
+      </if>
+      <if test="createdBy != null" >
+        CREATED_BY,
+      </if>
+      <if test="barcodeClob != null" >
+        BARCODE_CLOB,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="organizationId != null" >
+        #{organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="locattionCode != null" >
+        #{locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="subinventoryCode != null" >
+        #{subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="disableDate != null" >
+        #{disableDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdatedBy != null" >
+        #{lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="creationDate != null" >
+        #{creationDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null" >
+        #{createdBy,jdbcType=DECIMAL},
+      </if>
+      <if test="barcodeClob != null" >
+        #{barcodeClob,jdbcType=CLOB},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.egdfrm.unit.model.standard.MesItemLocattionsCriteria" resultType="java.lang.Integer" >
+    select count(*) from MES_ITEM_LOCATTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update MES_ITEM_LOCATTIONS
+    <set >
+      <if test="record.organizationId != null" >
+        ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.locattionCode != null" >
+        LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.subinventoryCode != null" >
+        SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.description != null" >
+        DESCRIPTION = #{record.description,jdbcType=VARCHAR},
+      </if>
+      <if test="record.disableDate != null" >
+        DISABLE_DATE = #{record.disableDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.lastUpdateDate != null" >
+        LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.lastUpdatedBy != null" >
+        LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.creationDate != null" >
+        CREATION_DATE = #{record.creationDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.createdBy != null" >
+        CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.barcodeClob != null" >
+        BARCODE_CLOB = #{record.barcodeClob,jdbcType=CLOB},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExampleWithBLOBs" parameterType="map" >
+    update MES_ITEM_LOCATTIONS
+    set ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      DESCRIPTION = #{record.description,jdbcType=VARCHAR},
+      DISABLE_DATE = #{record.disableDate,jdbcType=TIMESTAMP},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=TIMESTAMP},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=TIMESTAMP},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      BARCODE_CLOB = #{record.barcodeClob,jdbcType=CLOB}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update MES_ITEM_LOCATTIONS
+    set ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      DESCRIPTION = #{record.description,jdbcType=VARCHAR},
+      DISABLE_DATE = #{record.disableDate,jdbcType=TIMESTAMP},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=TIMESTAMP},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=TIMESTAMP},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <parameterMap type="Map" id="grtCargospaceListConditionMap">
+    <parameter property="itemLocation.subinventoryCode"  />
+    <parameter property="itemLocation.locattionCode"  />
+    <parameter property="from"  />
+    <parameter property="to"  /> 
+    
+ </parameterMap>
+  
+  <select id="pageQuery" resultMap="BaseResultMap">
+        SELECT * FROM (
+        SELECT A.*,
+        ROWNUM RN FROM (
+        
+        
+        select * from MES_ITEM_LOCATTIONS  
+    WHERE 1=1 
+    <if test="_parameter != null" >
+      <if test="model.subinventoryCode != null and model.subinventoryCode!=''" >
+        AND SUBINVENTORY_CODE = #{model.subinventoryCode,jdbcType=VARCHAR} 
+      </if>
+      <if test="model.locattionCode != null and model.locattionCode!=''" >
+        AND LOCATTION_CODE = #{model.locattionCode,jdbcType=VARCHAR} 
+      </if>
+      </if>
+      
+    ORDER BY SUBINVENTORY_CODE,LOCATTION_CODE 
+        
+        
+        ) A
+        WHERE ROWNUM <![CDATA[<=]]>${pageSize}+((${curPage}-1)*${pageSize})
+        )
+        WHERE RN <![CDATA[>=]]>1+((${curPage}-1)*${pageSize})
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        Select COUNT(*) FROM (
+        
+        
+        select * from MES_ITEM_LOCATTIONS  
+    WHERE 1=1 
+    <if test="_parameter != null" >
+      <if test="model.subinventoryCode != null and model.subinventoryCode!=''" >
+        AND SUBINVENTORY_CODE = #{model.subinventoryCode,jdbcType=VARCHAR} 
+      </if>
+      <if test="model.locattionCode != null and model.locattionCode!=''" >
+        AND LOCATTION_CODE = #{model.locattionCode,jdbcType=VARCHAR} 
+      </if>
+      </if>
+        
+        
+        )
+    </select>
+  
+</mapper>

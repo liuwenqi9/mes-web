@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.JJNoProductBarcodeMapper">
+
+	<resultMap id="resultmap" type="com.egdfrm.unit.model.barcodeManagement.JJNoproductBarcode">
+        <result column="BARCODE_TEXT" property="barcodeText" jdbcType="VARCHAR"/>
+        <result column="inventory_item_id" property="inventoryItemId" jdbcType="VARCHAR"/>
+        <result column="xx" property="codeId" jdbcType="NUMERIC"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>
+        <result column="SUBINVENTORY_CODE" property="sourceSubLibrary" jdbcType="VARCHAR"/>
+        <result column="LOCATTION_CODE" property="sourceLocation" jdbcType="VARCHAR"/>
+    </resultMap>
+    
+    <select id="verifyProductBarcode" resultType="java.lang.String" parameterType="java.lang.String">
+         SELECT WB.BARCODE_TEXT
+		  FROM MES.MES_WIP_BARCODES WB
+		 WHERE 1=1
+		   AND WB.STATUS_CODE = 'PROD'
+		   AND WB.SUBINVENTORY_CODE IS NULL
+		   AND WB.WIP_ENTITY_ID IS NULL
+		   AND WB.PRIMARY_ITEM_ID IS NULL
+		   AND WB.BARCODE_TYPE = 'NX_BARCODE'
+		   AND WB.BARCODE_TEXT = #{productBarcode} 
+    </select>
+    <select id="verifyProductBarcodeAdd" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT WB.BARCODE_TEXT
+		  FROM MES.MES_WIP_BARCODES WB
+		      WHERE 1=1 
+		     AND WB.BARCODE_TEXT = #{productBarcode} 
+    </select>
+    <!-- 验证条码是否为上线返修 -->
+      <select id="verifyProductBarcodeIsReprod" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT WB.BARCODE_TEXT
+		  FROM MES.MES_WIP_BARCODES WB
+		      WHERE 1=1  and WB.STATUS_CODE ='REPROD'  AND WB.BARCODE_TYPE = 'NX_BARCODE'
+		     AND WB.BARCODE_TEXT = #{productBarcode} 
+    </select>
+    
+    
+    <update id="update" parameterType="com.egdfrm.unit.model.barcodeManagement.JJNoproductBarcode">
+     UPDATE MES.MES_WIP_BARCODES WB 
+	     SET WB.STATUS_CODE = 'S_INV',WB.SUBINVENTORY_CODE=#{model.sourceSubLibrary},WB.LOCATTION_CODE = #{model.sourceLocation},
+	     WB.LAST_UPDATE_DATE=SYSDATE,WB.LAST_UPDATED_BY=#{userId},
+	     WB.PRIMARY_ITEM_ID =#{model.codeId},WB.attribute2='UPDATE_INV'
+     WHERE WB.BARCODE_TEXT=#{model.barcodeText} 
+    </update>
+    
+    <insert id="insert" parameterType="com.egdfrm.unit.model.barcodeManagement.JJNoproductBarcode"> 
+		    insert into mes.mes_wip_barcodes
+		   (wip_barcode_id,
+		    organization_id,
+		    wip_entity_id,
+		    primary_item_id,
+		    barcode_type,
+		    barcode_text,
+		    subinventory_code,
+		    locattion_code,
+		    start_quantity,
+		    onhand_quantity,
+		    packing_flag,
+		    status_code,
+		    last_update_date,
+		    last_updated_by,
+		    creation_date,
+		    created_by,
+		    attribute2)
+		 values
+		   (mes_wip_barcodes_s.nextval,
+		    101,
+		    null,
+		    #{model.codeId,jdbcType=NUMERIC}, 
+		    'NX_BARCODE',
+		    #{model.barcodeText},
+		    #{model.sourceSubLibrary},
+		    #{model.sourceLocation},
+		    1,
+		    1,
+		    'Y',
+		    'S_INV',
+		    sysdate,
+		    #{userId,jdbcType=NUMERIC},
+		    sysdate,
+		    #{userId,jdbcType=NUMERIC},
+		    'CEATE_INV')
+    </insert> 
+    
+    <!-- 更新为发运 ship-->
+    <update id="updateToShip" parameterType="com.egdfrm.unit.model.barcodeManagement.JJNoproductBarcode">
+     UPDATE MES.MES_WIP_BARCODES WB 
+	     SET WB.STATUS_CODE = 'SHIP',WB.SUBINVENTORY_CODE=#{model.sourceSubLibrary},WB.LOCATTION_CODE = #{model.sourceLocation},
+	     WB.LAST_UPDATE_DATE=SYSDATE,WB.LAST_UPDATED_BY=#{userId},
+	     WB.PRIMARY_ITEM_ID =#{model.codeId},WB.attribute2='UPDATE_SHIP'
+     WHERE WB.BARCODE_TEXT=#{model.barcodeText} 
+    </update>
+    <!-- 销售 直接添加成SHIP状态 -->
+    <insert id="insertToShip" parameterType="com.egdfrm.unit.model.barcodeManagement.JJNoproductBarcode"> 
+		    insert into mes.mes_wip_barcodes
+		   (wip_barcode_id,
+		    organization_id,
+		    wip_entity_id,
+		    primary_item_id,
+		    barcode_type,
+		    barcode_text,
+		    subinventory_code,
+		    locattion_code,
+		    start_quantity,
+		    onhand_quantity,
+		    packing_flag,
+		    status_code,
+		    last_update_date,
+		    last_updated_by,
+		    creation_date,
+		    created_by,
+		    attribute2)
+		 values
+		   (mes_wip_barcodes_s.nextval,
+		    101,
+		    null,
+		    #{model.codeId,jdbcType=NUMERIC}, 
+		    'NX_BARCODE',
+		    #{model.barcodeText},
+		    #{model.sourceSubLibrary},
+		    #{model.sourceLocation},
+		    1,
+		    1,
+		    'Y',
+		    'SHIP',
+		    sysdate,
+		    #{userId,jdbcType=NUMERIC},
+		    sysdate,
+		    #{userId,jdbcType=NUMERIC},
+		    'CRATE_SHIP')
+    </insert> 
+    
+   
+   <!-- 根据物料取型号 -->
+   <select id="verifyCodeId" resultMap="resultmap" parameterType="java.lang.String" >  
+   	select inventory_item_id,segment1,
+        apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type
+        from apps.mtl_system_items_b ms
+        where substr(ms.segment1, 1, 2) in ('18', '19')
+        and ms.inventory_item_status_code &lt;&gt;'Inactive'
+        and ms.organization_id = 101
+        and segment1 = #{segment1} 
+     </select>
+    <!--取子库 --> 
+     <select id="getSecondaryInventoryName" resultMap="resultmap" >
+     	select t.secondary_inventory_name SUBINVENTORY_CODE
+			  from apps.mtl_subinventories_all_v t
+			 where nvl(t.disable_date, sysdate + 1) > sysdate  and secondary_inventory_name like'%F%'
+			 ORDER BY secondary_inventory_name
+     </select>
+     
+      <!--根据子库去货位 --> 
+     <select id="getLocattionCode" resultMap="resultmap" parameterType="java.lang.String" > 
+		     SELECT MIL.Locattion_Code LOCATTION_CODE
+			  FROM MES.MES_ITEM_LOCATTIONS MIL
+			 INNER JOIN APPS.MTL_SUBINVENTORIES_ALL_V MSAV
+			    ON MIL.SUBINVENTORY_CODE = MSAV.SECONDARY_INVENTORY_NAME
+			  LEFT JOIN MES.TT_APPLICATION_USER CAU
+			    ON MIL.CREATED_BY = CAU.USER_ID
+			   AND MSAV.LOCATOR_TYPE = 1
+			  LEFT JOIN MES.TT_APPLICATION_USER LAU
+			    ON MIL.LAST_UPDATED_BY = LAU.USER_ID
+			   AND MSAV.LOCATOR_TYPE = 1
+			 WHERE 1=1
+		    AND MSAV.SECONDARY_INVENTORY_NAME =#{locattionCode}
+		    group by  MIL.Locattion_Code
+     </select>
+    
+    <select id="verifyBarcode" resultType="java.lang.String" parameterType="java.lang.String"> 
+   		 SELECT WB.BARCODE_TEXT FROM MES.MES_WIP_BARCODES WB WHERE WB.BARCODE_TEXT = #{barcode}
+    </select>
+   
+</mapper>

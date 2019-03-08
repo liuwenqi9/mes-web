@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.board.StorageMapper">
+
+    <resultMap id="StorageMap" type="com.egdfrm.unit.model.board.Storage">
+    	<result column="inv_date" property="inv_date" jdbcType="VARCHAR"/> 
+        <result column="wip_count" property="wip_count" jdbcType="VARCHAR"/>
+    	
+    	<result column="plan_line" property="plan_line" jdbcType="VARCHAR"/>
+    	<result column="inv_number" property="inv_number" jdbcType="VARCHAR"/>
+    	<result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+    	<result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+    	<result column="segment2" property="segment2" jdbcType="VARCHAR"/>
+        <result column="pack_count" property="pack_count" jdbcType="NUMERIC"/> 
+        <result column="pack_quantity" property="pack_quantity" jdbcType="NUMERIC"/> 
+        <result column="customer_type" property="customer_type" jdbcType="VARCHAR"/> 
+        
+    </resultMap>
+
+    <!--查询待入库数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="java.lang.Integer">
+        SELECT count(1) total FROM (
+         select substr(inv_number, 1, 8) inv_date,
+                 plan_line,
+                 count(distinct wip_entity_name) wip_count,
+                 count(distinct barcode_text) pack_count,
+                 sum(pack_quantity) pack_quantity
+            from apps.mes_packing_headers_inv_v t
+           where status_code = 'WIP_COM'
+             and organization_id = 101
+           group by substr(inv_number, 1, 8), plan_line
+           order by substr(inv_number, 1, 8), plan_line
+      ) t
+    </select>
+
+
+    <!--待入库分页查询-->
+    <select id="findPage" resultMap="StorageMap">
+        SELECT * from (
+          SELECT rownum rnum,t.* FROM (
+             select substr(inv_number, 1, 8) inv_date,
+                 plan_line,
+                 count(distinct wip_entity_name) wip_count,
+                 count(distinct barcode_text) pack_count,
+                 sum(pack_quantity) pack_quantity
+            from apps.mes_packing_headers_inv_v t
+           where status_code = 'WIP_COM'
+             and organization_id = 101
+           group by substr(inv_number, 1, 8), plan_line
+           order by substr(inv_number, 1, 8), plan_line
+          ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+     <select id="sum_findPage" resultMap="StorageMap"> 
+          SELECT sum(p.wip_count) wip_count, sum(p.pack_count) pack_count,sum(p.pack_quantity) pack_quantity FROM (
+             select substr(inv_number, 1, 8) inv_date,
+                 plan_line,
+                 count(distinct wip_entity_name) wip_count,
+                 count(distinct barcode_text) pack_count,
+                 sum(pack_quantity) pack_quantity
+            from apps.mes_packing_headers_inv_v t
+           where status_code = 'WIP_COM'
+             and organization_id = 101
+           group by substr(inv_number, 1, 8), plan_line
+           order by substr(inv_number, 1, 8), plan_line ) p
+    </select>
+
+    <!--待入库报表数据查询-->
+    <select id="finAll" resultMap="StorageMap" parameterType="java.lang.Integer">
+        select plan_line,inv_number,wip_entity_name,segment1,segment2,count(barcode_text) pack_count,sum(pack_quantity) pack_quantity,customer_type
+              from apps.mes_packing_headers_inv_v t where status_code = 'WIP_COM' and organization_id = #{orgId}
+              group by plan_line,inv_number,wip_entity_name,segment1,segment2,customer_type order by plan_line,inv_number
+    </select>
+    
+    <!--查询待入库数据总数（报表）-->
+    <select id="getCount2" resultType="java.lang.Long" parameterType="java.lang.Integer">
+        SELECT count(1) total FROM (
+         select plan_line,inv_number,wip_entity_name,segment1,segment2,count(barcode_text) pack_count,sum(pack_quantity) pack_quantity,customer_type
+              from apps.mes_packing_headers_inv_v t where status_code = 'WIP_COM' and organization_id = #{orgId}
+              group by plan_line,inv_number,wip_entity_name,segment1,segment2,customer_type order by plan_line,inv_number
+      ) t
+    </select>
+
+
+    <!--待入库分页查询 (报表)-->
+    <select id="findPage2" resultMap="StorageMap">
+        SELECT * from (
+          SELECT rownum rnum,t.* FROM (
+             select plan_line,inv_number,wip_entity_name,segment1,segment2,count(barcode_text) pack_count,sum(pack_quantity) pack_quantity,customer_type
+              from apps.mes_packing_headers_inv_v t where status_code = 'WIP_COM' and organization_id = #{orgId}
+              group by plan_line,inv_number,wip_entity_name,segment1,segment2,customer_type order by plan_line,inv_number
+          ) t WHERE ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+</mapper>

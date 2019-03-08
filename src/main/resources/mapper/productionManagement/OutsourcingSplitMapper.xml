@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.OutsourcingSplitMapper">
+
+	<select id="getOutsourcingByBarcode" parameterType="java.lang.String" resultType="java.util.Map">
+	 select v.packing_BARCODE_TEXT BARCODE_TEXT
+        ,v.wip_entity_name
+        ,v.BARCODE_TEXT PROD_TEXT
+        ,v.ITEM
+        ,v.SEGMENT2
+        ,v.description
+        ,v.packing_barcode_id
+        ,v.wip_barcode_id
+   from apps.mes_wip_outsourced_unpack_v v
+  where 1=1
+
+   <if test="barcodeText != null and barcodeText!='' ">
+   	AND v.packing_BARCODE_TEXT = #{barcodeText}
+   </if>
+
+
+	</select>
+
+    <select id="getOutsourcingSplitProduct" parameterType="java.util.Map" resultType="java.util.Map">
+        select v.packing_BARCODE_TEXT BARCODE_TEXT
+        ,v.wip_entity_name
+        ,v.BARCODE_TEXT PROD_TEXT
+        ,v.ITEM
+        ,v.SEGMENT2
+        ,v.description
+        ,v.packing_barcode_id
+        ,v.wip_barcode_id
+       from apps.mes_wip_outsourced_unpack_v v
+      where 1=1
+         AND v.packing_BARCODE_TEXT = #{map.packageBarcode,jdbcType=VARCHAR}
+         AND BARCODE_TEXT = #{map.productBarcode,jdbcType=VARCHAR}
+    </select>
+
+
+	<select id="callOutsourcedUnpack" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.Mes_Wip_Outsourced_Unpack.Outsourced_Unpack(
+        #{map.prodId,mode=IN,jdbcType=NUMERIC},
+        #{map.barcodeId,mode=IN,jdbcType=NUMERIC},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+      ) }
+    </select>
+
+     <!-- 修改数量 -->
+     <update id="updatePackQuantity" parameterType="java.util.Map" >
+     Update mes.mes_packing_headers mph
+   		 Set  mph.last_update_date=sysdate,mph.last_updated_by= #{map.userId,jdbcType=NUMERIC},
+   		      mph.pack_quantity = mph.pack_quantity - #{map.packQuantity,jdbcType=NUMERIC}
+  			Where mph.packing_barcode_id = #{map.packBarcodeId,jdbcType=VARCHAR}
+     
+     </update>
+
+
+</mapper>

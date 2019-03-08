@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.PackageBarcodeMapper">
+
+    <resultMap id="getPrintDataMap" type="com.egdfrm.unit.model.barcodeManagement.PackagePrint">
+        <result column="prod_type" property="modelNo" jdbcType="VARCHAR"/>
+        <result column="item_no" property="partNumber" jdbcType="VARCHAR"/>
+        <result column="pi_no" property="piNo" jdbcType="VARCHAR"/>
+        <result column="po_no" property="poNo" jdbcType="VARCHAR"/>
+         <result column="mo_no" property="moNo" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="orderNo" jdbcType="VARCHAR"/>
+        <result column="quantity" property="pcs" jdbcType="VARCHAR"/>
+        <result column="pack_seq" property="cNo" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--获取包装条码列表_总数据条数-->
+    <select id="getConnt" resultType="java.lang.Long" parameterType="java.util.Map">
+        SELECT COUNT(*) TOTAL FROM APPS.MES_PACKING_HEADERS_V
+        WHERE 1=1
+        <if test="map.workOrder != null and map.workOrder != ''">
+            AND WIP_ENTITY_NAME = #{map.workOrder}
+        </if>
+        <if test="map.packageBarcode != null and map.packageBarcode != ''">
+            AND BARCODE_TEXT LIKE '%'||#{map.packageBarcode}||'%'
+        </if>
+        <if test="map.typeCode != null and map.typeCode != ''">
+            AND PACK_TYPE_CODE LIKE '%'||#{map.typeCode}||'%'
+        </if>
+        <if test="map.printStatus != null and map.printStatus != ''">
+            AND PRINT_FLAG = #{map.printStatus}
+        </if>
+    </select>
+
+    <!--获取包装条码列表-->
+    <select id="gePageData" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT PLAN_LINE_CODE,WIP_ENTITY_NAME,ITEM_NO,DESCRIPTION,START_QUANTITY,PACK_TYPE,BARCODE_TEXT,QUANTITY,WIP_STATUS,PACK_QUANTITY,PRINT_FLAG from (
+            SELECT ROWNUM rnum,PLAN_LINE_CODE,WIP_ENTITY_NAME,ITEM_NO,DESCRIPTION,START_QUANTITY,PACK_TYPE,BARCODE_TEXT,QUANTITY,WIP_STATUS,PACK_QUANTITY,PRINT_FLAG
+            FROM APPS.MES_PACKING_HEADERS_V
+            WHERE 1=1
+            <if test="map.workOrder != null and map.workOrder != ''">
+                AND WIP_ENTITY_NAME = #{map.workOrder}
+            </if>
+            <if test="map.packageBarcode != null and map.packageBarcode != ''">
+                AND BARCODE_TEXT LIKE '%'||#{map.packageBarcode}||'%'
+            </if>
+            <if test="map.typeCode != null and map.typeCode != ''">
+                AND PACK_TYPE_CODE LIKE '%'||#{map.typeCode}||'%'
+            </if>
+            <if test="map.printStatus != null and map.printStatus != ''">
+                AND PRINT_FLAG = #{map.printStatus}
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+    <!--根据工单号获取贴箱标志-->
+    <select id="getFlagMark" resultType="java.lang.String" parameterType="java.lang.String">
+        select nvl(max(pack_flag), 'N') from mes.mes_capacity_packing mp,wip.wip_entities we
+         where mp.organization_id = we.organization_id
+           and mp.inventory_item_id = we.primary_item_id
+           and we.wip_entity_name = #{workOrder}
+    </select>
+
+    <!--获取包装类型-->
+    <select id="getPackageType" resultType="java.util.Map">
+        select ml.lookup_code,ml.description
+        from mes.mes_lookups ml
+        where ml.lookup_type = 'PACKING_TYPE'
+        and ml.lookup_code &lt;&gt; 'P_PACK'
+        and nvl(ml.end_date_active, trunc(sysdate + 1)) &gt; trunc(sysdate)
+    </select>
+
+    <!--条码生成-->
+    <select id="barcodePackage" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_wip_barcodes_pkg.create_pack_barcode(#{map.p_organization_id,mode=IN,jdbcType=NUMERIC},
+        #{map.p_wip_entity_id,mode=IN,jdbcType=VARCHAR},#{map.p_user_id,mode=IN,jdbcType=NUMERIC},#{map.p_pack_type,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--获取包装条码打印数据-->
+    <select id="getPrintData" resultMap="getPrintDataMap" parameterType="java.util.Arrays">
+        select prod_type,item_no,pi_no,po_no,mo_no,wip_entity_name,quantity,pack_seq from apps.mes_packing_headers_v
+        where barcode_text IN 
+        <foreach collection="codes" item="code" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </select>
+
+    <!--修改打印状态-->
+    <update id="updatePrintStatus" parameterType="java.util.Arrays">
+        update mes.mes_packing_headers h set print_flag = 'Y' where h.barcode_text IN 
+        <foreach collection="codes" item="code" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </update>
+    
+    <!--包装条码信息查询-->
+    <select id="searchPackageBarcode"   resultType="map">
+    	select (select mh.barcode_text
+          from mes.mes_packing_headers mh
+         where mh.packing_barcode_id = l.packing_barcode_id) pack_barcode_text,
+       apps.mes_wip_barcodes_pack_pkg.get_pack_quantity( #{packageBarcodeId,jdbcType=NUMERIC} ) pack_quantity,
+       mb.locattion_code,
+       mb.barcode_text,
+       ms.segment1,
+       l.quantity,
+       apps.mes_barcodes_pd_pkg.get_prod_type(mb.primary_item_id) prod_type,
+       (select we.wip_entity_name
+          from wip.wip_entities we
+         where we.wip_entity_id = mb.wip_entity_id) wip_entity_name,
+       (select wdj.attribute1
+          from wip.wip_discrete_jobs wdj
+         where wdj.wip_entity_id = mb.wip_entity_id
+           and wdj.organization_id = mb.organization_id) mo_order,
+       mb.line_code,
+       ms.description
+  from (select l.packing_barcode_id,
+               l.line_barcode_id,
+               l.quantity
+          from mes.mes_packing_lines l
+         where l.packing_type &lt;&gt; 'PACK'
+         start with l.packing_barcode_id =  #{packageBarcodeId,jdbcType=NUMERIC}
+        connect by l.packing_barcode_id = prior l.line_barcode_id) l,
+       inv.mtl_system_items_b ms,
+       mes.mes_wip_barcodes mb
+ where ms.inventory_item_id = mb.primary_item_id
+   and ms.organization_id = mb.organization_id
+   and mb.wip_barcode_id = l.line_barcode_id
+ order by mb.barcode_text asc 
+    
+    </select>
+</mapper>

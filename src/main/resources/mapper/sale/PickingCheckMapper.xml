@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.sale.PickingCheckMapper">
+
+
+    <!--查询数据总数-->
+    <select id="queryCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_move_order_pack_v
+        where 1 = 1
+        <if test="map.pickingNum != null and map.pickingNum != ''">
+            and request_number = #{map.pickingNum}
+        </if>
+        <if test="map.checkType != null and map.checkType != ''">
+            and pack_flag = 'N'
+        </if>
+    </select>
+
+    <!--挑库拼箱检查查询-->
+    <select id="queryPages" resultType="java.util.Map" parameterType="java.util.Map">
+        select * from (
+            select rownum rnum,request_number,segment1,onhand_quantity,barcode_text,prod_type,pack_barcode_text,description,
+            nvl(substr(transaction_date,0,10),'--') transaction_date from apps.mes_move_order_pack_v
+            where 1 = 1
+            <if test="map.pickingNum != null and map.pickingNum != ''">
+                and request_number = #{map.pickingNum}
+            </if>
+            <if test="map.checkType != null and map.checkType != ''">
+                and pack_flag = 'N'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY segment1,barcode_text
+    </select>
+    
+    
+    
+    <resultMap id="aa" type="com.egdfrm.unit.excelmodel.PickingExcelModel">
+	        <result column="request_number" property="requestNumber" jdbcType="VARCHAR"/>
+	        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+	        <result column="onhand_quantity" property="onhandQuantity" jdbcType="NUMERIC"/>   
+	        <result column="barcode_text" property="barcodeText" jdbcType="VARCHAR"/> 
+	        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>  
+	        <result column="description" property="description" jdbcType="VARCHAR"/> 
+	        <result column="pack_barcode_text" property="packBarcodeText" jdbcType="VARCHAR"/> 
+	        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR"/> 
+	    </resultMap>
+    <select id="exportExcel" resultMap="aa" parameterType="java.util.Map"> 
+			 select request_number,segment1,onhand_quantity,barcode_text,prod_type,pack_barcode_text,description
+			 ,nvl(substr(transaction_date,0,10),'--') transaction_date from apps.mes_move_order_pack_v
+            	where 1 = 1
+            <if test="map.pickingNum != null and map.pickingNum != ''">
+                and request_number = #{map.pickingNum}
+            </if>
+            <if test="map.checkType != null and map.checkType != ''">
+                and pack_flag = 'N'
+            </if>
+    </select>
+    
+</mapper>

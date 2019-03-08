@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.inventoryManagement.MiscellaneousDisposalMapper" >
+ 
+  <!-- 获取【事务处理类型】列表 -->
+  <select id="getTransactionTypeList"  resultType="map">
+  <![CDATA[
+	SELECT T.LOOKUP_CODE, T.DESCRIPTION
+	  FROM MES.MES_LOOKUPS T
+	 WHERE T.LOOKUP_TYPE = 'TRANSACTION_TYPE'
+	   AND T.LOOKUP_CODE IN ('ALIAS_RECEIPT', 'ALIAS_ISSUE')
+	]]> 
+	</select>
+  <!-- 搜索【来源】-->
+  <select id="searchSourceByName"  resultType="map">
+  <![CDATA[
+	SELECT T.DISPOSITION_ID, T.SEGMENT1,T.DESCRIPTION, T.DISABLE_DATE
+	  FROM APPS.MTL_GENERIC_DISPOSITIONS T
+	 WHERE NVL(T.DISABLE_DATE, SYSDATE + 1) > SYSDATE
+	   AND T.ORGANIZATION_ID = #{orgId,jdbcType=DECIMAL}
+	]]> 
+	   
+    <if test="sourceLike != null and sourceLike != ''" >
+    <![CDATA[
+	   AND T.SEGMENT1 LIKE #{sourceLike,jdbcType=VARCHAR}
+	]]>
+    </if>
+  <![CDATA[
+	  ORDER BY T.SEGMENT1 ASC
+	]]> 
+  </select> 
+  <!-- 校验【事务处理类型】 -->
+  <select id="checkTransactionType"  resultType="map">
+  <![CDATA[
+	SELECT T.LOOKUP_CODE, T.DESCRIPTION
+	  FROM MES.MES_LOOKUPS T
+	 WHERE T.LOOKUP_TYPE = 'TRANSACTION_TYPE'
+	   AND T.LOOKUP_CODE = #{type,jdbcType=VARCHAR}
+	]]> 
+	</select>
+  <!-- 校验表单【来源】-->
+  <select id="checkSourceByNames"  resultType="map">
+  <![CDATA[
+	SELECT T.DISPOSITION_ID, T.SEGMENT1,T.DESCRIPTION, T.DISABLE_DATE
+	  FROM APPS.MTL_GENERIC_DISPOSITIONS T
+	 WHERE NVL(T.DISABLE_DATE, SYSDATE + 1) > SYSDATE
+	   AND T.ORGANIZATION_ID = #{orgId,jdbcType=DECIMAL}
+	]]> 
+	   
+    <if test="source != null and source != ''" >
+	   AND T.SEGMENT1 =  #{source,jdbcType=VARCHAR}  
+    </if>
+  <![CDATA[
+	  ORDER BY T.DISPOSITION_ID ASC
+	]]> 
+  </select> 
+  <!--帐户别名三步1检查写入事务接口表结果(验证表单)-->
+  <select id="callCheckTransactionInsert" parameterType="map" statementType="CALLABLE">
+	{call apps.mes_barcodes_alias_pkg.check_data( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--帐户别名三步2写入MES-->
+  <select id="callTransactionInsertMES" parameterType="map" statementType="CALLABLE">
+	{call apps.mes_barcodes_alias_pkg.transaction_mes( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--帐户别名三步3写入EBS-->
+  <select id="callTransactionInsertEBS" parameterType="map" statementType="CALLABLE">
+	{call apps.mes_barcodes_alias_pkg.mes_barcodes_alias( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

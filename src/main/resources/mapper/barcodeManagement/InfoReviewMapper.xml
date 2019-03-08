@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.InfoReviewMapper">
+
+    <!--基本信息数据总数查询-->
+    <select id="getBasicPageCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_wip_barcode_history t
+        WHERE 1 = 1
+        <if test="map.barcodeNum != null and map.barcodeNum != ''">
+            and barcode_text = #{map.barcodeNum}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.moNumber != null and map.moNumber != ''">
+            and mo_order = #{map.moNumber}
+        </if>
+    </select>
+
+    <!--基本信息查询-->
+    <select id="getBasicPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * from (
+          select ROWNUM rnum,t.barcode_text,t.wip_entity_name,t.mo_order,t.plan_line_code,t.segment1,t.description,t.prod_tpye,t.barcode_status,
+            t.wip_date,t.inv_date,t.subinventory_code,t.inv_quantity,t.locattion_code,t.start_quantity
+            from apps.mes_wip_barcode_history t WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if>
+            AND ROWNUM &lt;= #{page.endset} ORDER BY barcode_text
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+	<!-- basicPageExcel NUMERIC VARCHAR -->
+	<resultMap id="basicPageExcel" type="com.egdfrm.unit.excelmodel.BasicPageExcel">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+        <result column="mo_order" property="mo_order" jdbcType="VARCHAR"/>
+        <result column="plan_line_code" property="plan_line_code" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="prod_tpye" property="prod_tpye" jdbcType="VARCHAR"/>
+        <result column="barcode_quantity" property="barcode_quantity" jdbcType="NUMERIC"/>
+        <result column="barcode_status" property="barcode_status" jdbcType="VARCHAR"/> 
+        <result column="wip_date" property="wip_date" jdbcType="VARCHAR"/>
+        <result column="inv_date" property="inv_date" jdbcType="VARCHAR"/>
+        <result column="inv_quantity" property="inv_quantity" jdbcType="NUMERIC"/>
+        <result column="start_quantity" property="start_quantity" jdbcType="NUMERIC"/>
+        <result column="subinventory_code" property="subinventory_code" jdbcType="VARCHAR"/>
+        <result column="locattion_code" property="locattion_code" jdbcType="VARCHAR"/> 
+    </resultMap>    
+	<!--基本信息  excel-->
+    <select id="basicPageExportExcel" resultMap="basicPageExcel" parameterType="java.util.Map">
+          select t.barcode_text,t.wip_entity_name,t.mo_order,t.plan_line_code,t.segment1,t.description,t.prod_tpye,t.barcode_status,
+            t.wip_date,t.inv_date,t.subinventory_code,t.inv_quantity,t.locattion_code,t.start_quantity
+            from apps.mes_wip_barcode_history t WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if> 
+    </select>
+
+
+    <!--出货信息数据总数查询-->
+    <select id="getShipmentPageCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_wip_barcode_ship_history t
+        WHERE 1 = 1
+        <if test="map.barcodeNum != null and map.barcodeNum != ''">
+            and barcode_text = #{map.barcodeNum}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.moNumber != null and map.moNumber != ''">
+            and mo_order = #{map.moNumber}
+        </if>
+    </select>
+
+    <!--出货信息查询-->
+    <select id="getShipmentPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * from (
+            select ROWNUM rnum,t.barcode_text,t.segment1,t.source_header_number,t.transaction_date,t.quantity,t.customer_name,t.area,t.request_number,t.wip_entity_name,t.mo_order
+            from apps.mes_wip_barcode_ship_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if>
+            AND ROWNUM &lt;= #{page.endset} ORDER BY barcode_text
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    
+    <!-- shipmentPageExcel NUMERIC VARCHAR -->
+	<resultMap id="shipmentPageExcel" type="com.egdfrm.unit.excelmodel.ShipmentPageExcel">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="source_header_number" property="source_header_number" jdbcType="VARCHAR"/>
+        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR"/>
+        <result column="quantity" property="quantity" jdbcType="NUMERIC"/>
+        <result column="customer_name" property="customer_name" jdbcType="VARCHAR"/>
+        <result column="area" property="area" jdbcType="VARCHAR"/>
+        <result column="request_number" property="request_number" jdbcType="VARCHAR"/>   
+    </resultMap>
+    <!--出货信息 excel-->
+    <select id="shipmentPageExportExcel" resultMap="shipmentPageExcel" parameterType="java.util.Map">
+     select t.barcode_text,t.segment1,t.source_header_number,t.transaction_date,t.quantity,t.customer_name,t.area,t.request_number,t.wip_entity_name,t.mo_order
+            from apps.mes_wip_barcode_ship_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if> 
+    </select>
+    
+    
+
+    <!--退货信息数据总数查询-->
+    <select id="getBackPageCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_wip_barcode_return_history t
+        WHERE 1 = 1
+        <if test="map.barcodeNum != null and map.barcodeNum != ''">
+            and barcode_text = #{map.barcodeNum}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.moNumber != null and map.moNumber != ''">
+            and mo_order = #{map.moNumber}
+        </if>
+    </select>
+
+    <!--退货信息查询-->
+    <select id="getBackPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * from (
+            select ROWNUM rnum,t.barcode_text,t.segment1,t.transaction_date,t.transaction_quantity,t.wip_entity_name,t.mo_order from apps.mes_wip_barcode_return_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if>
+            AND ROWNUM &lt;= #{page.endset} ORDER BY barcode_text
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    
+    <!-- backPageExcel NUMERIC VARCHAR -->
+	<resultMap id="backPageExcel" type="com.egdfrm.unit.excelmodel.BackPageExcel">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR"/>
+        <result column="transaction_quantity" property="transaction_quantity" jdbcType="NUMERIC"/>    
+    </resultMap>
+    <!--退货信息 excel-->
+    <select id="backPageExportExcel" resultMap="backPageExcel" parameterType="java.util.Map">
+     select t.barcode_text,t.segment1,t.transaction_date,t.transaction_quantity,t.wip_entity_name,t.mo_order from apps.mes_wip_barcode_return_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if> 
+    </select>
+
+    <!--返修信息数据总数查询-->
+    <select id="getRepairPageCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_wip_barcode_reprod_history t
+        WHERE 1 = 1
+        <if test="map.barcodeNum != null and map.barcodeNum != ''">
+            and barcode_text = #{map.barcodeNum}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.moNumber != null and map.moNumber != ''">
+            and mo_order = #{map.moNumber}
+        </if>
+    </select>
+
+    <!--返修信息数据-->
+    <select id="getRepairPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * from (
+            select ROWNUM rnum,t.barcode_text,t.wip_entity_name,t.wip_date,t.transaction_date,t.mo_order
+            from apps.mes_wip_barcode_reprod_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if>
+            AND ROWNUM &lt;= #{page.endset} ORDER BY barcode_text
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    
+    <!-- repairPageExcel NUMERIC VARCHAR -->
+	<resultMap id="repairPageExcel" type="com.egdfrm.unit.excelmodel.RepairPageExcel">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+        <result column="wip_date" property="wip_date" jdbcType="VARCHAR"/>
+        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR"/>    
+    </resultMap>
+    <!--返修信息 excel-->
+    <select id="repairPageExportExcel" resultMap="repairPageExcel" parameterType="java.util.Map">
+       select t.barcode_text,t.wip_entity_name,t.wip_date,t.transaction_date,t.mo_order
+            from apps.mes_wip_barcode_reprod_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if> 
+    </select>
+    
+
+    <!--杂项交易数据总数查询-->
+    <select id="getMiscellaneousPageCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_wip_barcode_alias_history t
+        WHERE 1 = 1
+        <if test="map.barcodeNum != null and map.barcodeNum != ''">
+            and barcode_text = #{map.barcodeNum}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.moNumber != null and map.moNumber != ''">
+            and mo_order = #{map.moNumber}
+        </if>
+    </select>
+
+    <!--杂项交易数据-->
+    <select id="getMiscellaneousPage" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * from (
+            select ROWNUM rnum,t.barcode_text,t.item_no,t.transaction_date,t.transaction_quantity,t.description,t.segment1,t.wip_entity_name,t.mo_order
+            from apps.mes_wip_barcode_alias_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if>
+            AND ROWNUM &lt;= #{page.endset} ORDER BY barcode_text
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+    
+    <!-- miscellaneousPageExcel NUMERIC VARCHAR -->
+	<resultMap id="miscellaneousPageExcel" type="com.egdfrm.unit.excelmodel.MiscellaneousPageExcel">
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="item_no" property="item_no" jdbcType="VARCHAR"/>
+        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR"/>
+        <result column="transaction_quantity" property="transaction_quantity" jdbcType="NUMERIC"/> 
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/> 
+    </resultMap>
+     <!--杂项交易 excel-->
+    <select id="miscellaneousPageExcel" resultMap="miscellaneousPageExcel" parameterType="java.util.Map">
+        SELECT t.barcode_text,t.item_no,t.transaction_date,t.transaction_quantity,t.description,t.segment1,t.wip_entity_name,t.mo_order
+            from apps.mes_wip_barcode_alias_history t
+            WHERE 1 = 1
+            <if test="map.barcodeNum != null and map.barcodeNum != ''">
+                and barcode_text = #{map.barcodeNum}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.moNumber != null and map.moNumber != ''">
+                and mo_order = #{map.moNumber}
+            </if> 
+    </select>
+    
+</mapper>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.sale.WXOutMapper"> 
+    <!--总数-->
+    <select id="getWXOutCount" resultType="java.lang.Long" parameterType="java.util.Map">
+    	 select count(1) count from apps.cux_wx_ship_lines_v v,cux.CUX_WX_SHIP_HEADERS h
+				where h.header_id = v.header_id
+    		    <if test="map.document_num !=null and map.document_num != '' "> <!-- 出货通知单 -->
+					and h.document_num = #{map.document_num,jdbcType=VARCHAR}
+				</if>
+				<if test="map.cust_po_number!=null and map.cust_po_number != '' "> <!-- MO单 -->
+					and v.cust_po_number = #{map.cust_po_number,jdbcType=VARCHAR}
+				</if>
+				<if test="map.start_date != null and map.start_date != ''"> <!-- 计划出货开始日期  -->
+				  and h.scheduled_ship_date &gt;= to_date( #{map.start_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		           </if>
+		        <if test="map.end_date != null and map.end_date != ''"> <!-- 计划出货结束日期  -->
+		        	and h.scheduled_ship_date &lt;= to_date( #{map.end_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		        </if>
+    	
+		  
+    </select>
+
+    <!--分页数据-->
+    <select id="getWXOutList" resultType="java.util.Map" parameterType="java.util.Map">
+    	select * from ( 
+			select ROWNUM rnum,h.document_num,v.order_number,v.line_number,to_char(v.date_scheduled,'yyyy-mm-dd') date_scheduled,v.cust_po_number,v.segment1,v.prod_type ,v.requested_quantity,v.wip_entity_name,v.status_type,v.attribute7,to_char(v.scheduled_start_date,'yyyy-mm-dd') scheduled_start_date,v.start_quantity,v.quantity_completed,v.ship_quantity,
+			  v.shipped_quantity,v.custom_model,v.prod_quantity,v.min_transaction_date,v.cur_shipped_quantity,to_char(h.scheduled_ship_date,'yyyy-mm-dd') scheduled_ship_date
+			  from apps.cux_wx_ship_lines_v v ,cux.CUX_WX_SHIP_HEADERS h
+				where h.header_id = v.header_id
+				 <if test="map.document_num !=null and map.document_num != '' "> <!-- 出货通知单 -->
+					and h.document_num = #{map.document_num,jdbcType=VARCHAR}
+				</if>
+				<if test="map.cust_po_number!=null and map.cust_po_number != '' "> <!-- MO单 -->
+					and v.cust_po_number = #{map.cust_po_number,jdbcType=VARCHAR}
+				</if>
+				<if test="map.start_date != null and map.start_date != ''"> <!-- 计划出货开始日期  -->
+				  and h.scheduled_ship_date &gt;= to_date( #{map.start_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		           </if>
+		        <if test="map.end_date != null and map.end_date != ''"> <!-- 计划出货结束日期  -->
+		        	and h.scheduled_ship_date &lt;= to_date( #{map.end_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		        </if>
+				
+			  AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+   
+
+		<resultMap id="wXOutExcel" type="com.egdfrm.unit.excelmodel.WXOutExcel">
+	        <result column="document_num" property="document_num" jdbcType="VARCHAR"/>
+	        <result column="order_number" property="order_number" jdbcType="VARCHAR"/>
+	        <result column="line_number" property="line_number" jdbcType="NUMERIC"/>
+	        <result column="date_scheduled" property="date_scheduled" jdbcType="VARCHAR"/> 
+	        <result column="cust_po_number" property="cust_po_number" jdbcType="VARCHAR"/>
+	        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+	        <result column="prod_type" property="prod_type" jdbcType="VARCHAR"/> 
+	        <result column="custom_model" property="custom_model" jdbcType="VARCHAR"/>  
+	        <result column="requested_quantity" property="requested_quantity" jdbcType="NUMERIC"/>
+	        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+	        <result column="status_type" property="status_type" jdbcType="VARCHAR"/>
+	        <result column="attribute7" property="attribute7" jdbcType="VARCHAR"/> 
+	        <result column="scheduled_start_date" property="scheduled_start_date" jdbcType="VARCHAR"/>
+	        <result column="scheduled_ship_date" property="scheduled_ship_date" jdbcType="VARCHAR"/> 
+	        <result column="start_quantity" property="start_quantity" jdbcType="NUMERIC"/>
+	        <result column="quantity_completed" property="quantity_completed" jdbcType="NUMERIC"/> 
+	        <result column="ship_quantity" property="ship_quantity" jdbcType="NUMERIC"/> 
+	        <result column="shipped_quantity" property="shipped_quantity" jdbcType="NUMERIC"/>
+	        <result column="prod_quantity" property="prod_quantity" jdbcType="NUMERIC"/>
+	        <result column="min_transaction_date" property="min_transaction_date" jdbcType="VARCHAR"/> 
+	        <result column="cur_shipped_quantity" property="cur_shipped_quantity" jdbcType="NUMERIC"/><!-- 行发运数量 -->
+	    </resultMap>
+    <select id="exportExcel" resultMap="wXOutExcel" parameterType="java.util.Map"> 
+			  select h.document_num,v.order_number,v.line_number,v.date_scheduled,v.cust_po_number,v.segment1,v.prod_type ,v.requested_quantity,v.wip_entity_name,v.status_type,v.attribute7,v.scheduled_start_date,v.start_quantity,v.quantity_completed,v.ship_quantity,
+			  v.shipped_quantity,v.custom_model,v.prod_quantity,v.min_transaction_date,v.cur_shipped_quantity,to_char(h.scheduled_ship_date,'yyyy-mm-dd') scheduled_ship_date
+				from apps.cux_wx_ship_lines_v v ,cux.CUX_WX_SHIP_HEADERS h
+				where h.header_id = v.header_id
+				 <if test="map.document_num !=null and map.document_num != '' "> <!-- 出货通知单 -->
+					and h.document_num = #{map.document_num,jdbcType=VARCHAR}
+				</if>
+				<if test="map.cust_po_number!=null and map.cust_po_number != '' "> <!-- MO单 -->
+					and v.cust_po_number = #{map.cust_po_number,jdbcType=VARCHAR}
+				</if>
+				<if test="map.start_date != null and map.start_date != ''"> <!-- 计划出货开始日期  -->
+				  and h.scheduled_ship_date &gt;= to_date( #{map.start_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		           </if>
+		        <if test="map.end_date != null and map.end_date != ''"> <!-- 计划出货结束日期  -->
+		        	and h.scheduled_ship_date &lt;= to_date( #{map.end_date} ||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+		        </if>
+				 
+    </select> 
+    
+</mapper>

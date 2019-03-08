@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.stock.SeizeAnOpportunityMapper">
+
+    <resultMap id="SeizeAnOpportunityMap" type="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        <result column="header_id" property="id" jdbcType="VARCHAR"/>
+        <result column="lend_number" property="number" jdbcType="VARCHAR"/>
+        <result column="creation_date" property="createTime" jdbcType="VARCHAR"/>
+        <result column="dept_desc" property="dept" jdbcType="VARCHAR"/>
+        <result column="lend_by" property="person" jdbcType="VARCHAR"/>
+        <result column="jj_desc" property="purpose" jdbcType="VARCHAR"/>
+        <result column="remarks" property="remark" jdbcType="VARCHAR"/>
+        <result column="express" property="express" jdbcType="VARCHAR"/>
+        <result column="express_number" property="expressNumber" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="SaotyMap" type="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        <result column="header_id" property="id" jdbcType="VARCHAR"/>
+        <result column="lend_number" property="number" jdbcType="VARCHAR"/>
+        <result column="creation_date" property="createTime" jdbcType="VARCHAR"/>
+        <result column="lend_dept" property="dept" jdbcType="VARCHAR"/>
+        <result column="deptName" property="deptName" jdbcType="VARCHAR"/>
+        <result column="lend_by" property="person" jdbcType="VARCHAR"/>
+        <result column="lend_type" property="purpose" jdbcType="VARCHAR"/>
+        <result column="typeName" property="typeName" jdbcType="VARCHAR"/>
+        <result column="remarks" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="DetailedMap" type="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        <result column="segment1" property="code" jdbcType="VARCHAR"/>
+        <result column="prod_type" property="model" jdbcType="VARCHAR"/>
+        <result column="request_quantity" property="quantity" jdbcType="NUMERIC"/>
+        <result column="lend_quantity" property="lendQuantity" jdbcType="NUMERIC"/>
+        <result column="barcode_text" property="productCode" jdbcType="VARCHAR"/>
+        <result column="from_subinventory_code" property="sourceSubLibrary" jdbcType="VARCHAR"/>
+        <result column="to_subinventory_code" property="goalSubLibrary" jdbcType="VARCHAR"/>
+        <result column="to_locator" property="goalLocation" jdbcType="VARCHAR"/>
+        <result column="planned_return_date" property="returnTime" jdbcType="VARCHAR"/>
+        <result column="actual_return_date" property="actualTime" jdbcType="VARCHAR"/>
+        <result column="description" property="describe" jdbcType="VARCHAR"/>
+        <result column="lend_number" property="number" jdbcType="VARCHAR"/>
+        <result column="detail_id" property="id" jdbcType="NUMERIC"/>
+        <result column="line_id" property="line_id" jdbcType="NUMERIC"/>
+        <result column="wip_barcode_id" property="wip_barcode_id" jdbcType="NUMERIC"/>
+    </resultMap>
+
+    <!--部门查询-->
+    <select id="queryDepts" resultType="java.util.Map">
+        select dept.lookup_code,dept.description from mes.mes_lookups dept where dept.lookup_type = 'DEPT' ORDER BY lookup_code
+    </select>
+
+    <!--用途-->
+    <select id="queryPurposes" resultType="java.util.Map">
+        select jj.lookup_code,jj.description from mes.mes_lookups jj where jj.lookup_type = 'JJ_TYPE' ORDER BY lookup_code
+    </select>
+
+    <!--获取借机单号-->
+    <select id="getNumber" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_lend_process_pkg.get_lend_number(#{map.number,mode=OUT,jdbcType=VARCHAR}) }
+    </select>
+
+    <!--获取子库-->
+    <select id="queryLibrarys" resultType="java.util.Map">
+        select t.secondary_inventory_name,t.description from apps.mtl_subinventories_all_v t where  t.secondary_inventory_name like'F%' and nvl(t.disable_date, sysdate + 1) &gt; sysdate ORDER BY secondary_inventory_name
+    </select>
+
+    <!--根据目的子库获取目的货位-->
+    <select id="queryGoalLocations" resultType="java.util.Map" parameterType="java.lang.String">
+        select l.locattion_code from mes.mes_item_locattions l where nvl(l.disable_date, sysdate + 1) > sysdate and l.subinventory_code = #{goalSubLibrary} ORDER BY locattion_code
+    </select>
+
+    <!--根据编码查询物料信息-->
+    <select id="queryDescribe" resultType="java.util.Map" parameterType="java.lang.String">
+        select inventory_item_id,segment1,
+        apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type,
+        description
+        from apps.mtl_system_items_b ms
+        where substr(ms.segment1, 1, 2) in ('18', '19')
+        and ms.inventory_item_status_code &lt;&gt; 'Inactive'
+        and ms.organization_id = 101
+        and segment1 = #{code}
+        ORDER BY segment1
+    </select>
+
+    <!--借机头信息添加-->
+    <insert id="insertHead" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        insert into mes.mes_lend_headers (header_id,organization_id,lend_number,lend_dept,lend_type,lend_by,remarks,last_update_date,last_updated_by,creation_date,created_by)
+        values (#{id},#{orgId},#{number},#{dept},#{purpose},#{person},#{remark},#{updateTime},#{userId},#{createTime},#{userId})
+    </insert>
+
+    <!--借机行信息添加-->
+    <insert id="insertLine" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        insert into mes.mes_lend_lines
+        (header_id,organization_id,line_id,inventory_item_id,planned_return_date,from_subinventory_code,to_subinventory_code,to_locator,
+        request_quantity,last_update_date,last_updated_by,creation_date,created_by)
+        SELECT c1,c2,APPS.MES_LEND_LINES_S.NEXTVAL,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 FROM (
+        <foreach collection="list" item="seao" separator="union all">
+            SELECT #{seao.id} c1,#{seao.orgId} c2,#{seao.codeId} c3,to_date(#{seao.returnTime},'yyyy-mm-dd hh24:mi:ss')
+            c4,#{seao.sourceSubLibrary} c5,
+            #{seao.goalSubLibrary} c6,#{seao.goalLocation} c7,#{seao.quantity} c8,#{seao.updateTime} c9,#{seao.userId}
+            c10,#{seao.createTime} c11,#{seao.userId} c12 from dual
+        </foreach>
+        )
+    </insert>
+
+    <!--获取借机头信息ID-->
+    <select id="getHeadId" resultType="java.lang.Integer">
+        SELECT APPS.MES_LEND_HEADERS_S.NEXTVAL FROM DUAL
+    </select>
+
+    <!--获取借机行ID-->
+    <select id="getLineId" resultType="java.lang.Integer">
+        SELECT APPS.MES_LEND_LINES_S.NEXTVAL FROM DUAL
+    </select>
+
+    <!--借机汇总数据总数查询-->
+    <select id="findSummaryPageCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        select count(1) from apps.mes_lend_headers_v hv
+        WHERE 1=1
+        <if test="seaoty.number != null and seaoty.number != ''">
+            and hv.lend_number = #{seaoty.number}
+        </if>
+        <if test="seaoty.startTime != null and seaoty.startTime != ''">
+            and hv.creation_date &gt;= #{seaoty.startTime}
+        </if>
+        <if test="seaoty.endTime != null and seaoty.endTime != ''">
+            and hv.creation_date &lt;= #{seaoty.endTime}||' 23:59:59'
+        </if>
+    </select>
+
+    <!--借机汇总分页查询-->
+    <select id="findSummaryPage" resultMap="SeizeAnOpportunityMap" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        SELECT * FROM (
+        select ROWNUM rnum,lend_number,hv.creation_date,dept_desc,lend_by,jj_desc,remarks,header_id,organization_id,express_name express,express_number
+        from apps.mes_lend_headers_v hv
+        WHERE 1=1
+        <if test="seaoty.number != null and seaoty.number != ''">
+            and hv.lend_number = #{seaoty.number}
+        </if>
+        <if test="seaoty.startTime != null and seaoty.startTime != ''">
+            and hv.creation_date &gt;= #{seaoty.startTime}
+        </if>
+        <if test="seaoty.endTime != null and seaoty.endTime != ''">
+            and hv.creation_date &lt;= #{seaoty.endTime}||' 23:59:59'
+        </if>
+        AND ROWNUM &lt;= #{page.endset} ORDER BY hv.lend_number desc
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+    <!--借机详情数据总数查询-->
+    <select id="findDetailedPageCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        select count(1) from apps.mes_lend_lines_v t
+        WHERE 1 = 1
+        <if test="seaoty.number != null and seaoty.number != '' ">
+            and lend_number = #{seaoty.number}
+        </if>
+        <if test="seaoty.dept != null and seaoty.dept != '' ">
+            and dept_desc = #{seaoty.dept}
+        </if>
+        <if test="seaoty.person != null and seaoty.person != '' ">
+            and lend_by like '%'||#{seaoty.person}||'%'
+        </if>
+        <if test="seaoty.purpose != null and seaoty.purpose != '' ">
+            and jj_desc = #{seaoty.purpose}
+        </if>
+        <if test="seaoty.describe != null and seaoty.describe != '' ">
+            and description like '%'||#{seaoty.describe}||'%'
+        </if>
+    </select>
+
+    <!--借机详情数据分页查询-->
+    <select id="findDetailedPage" resultMap="DetailedMap" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        SELECT * FROM (
+        select ROWNUM
+        rnum,t.lend_number,t.segment1,t.prod_type,t.request_quantity,t.lend_quantity,t.barcode_text,t.from_subinventory_code,t.to_subinventory_code,t.to_locator,
+        t.planned_return_date,t.actual_return_date,t.description,t.detail_id,t.line_id,t.wip_barcode_id
+        from apps.mes_lend_lines_v t
+        WHERE 1=1
+        <if test="seaoty.number != null and seaoty.number != '' ">
+            and lend_number = #{seaoty.number}
+        </if>
+        <if test="seaoty.dept != null and seaoty.dept != '' ">
+            and dept_desc = #{seaoty.dept}
+        </if>
+        <if test="seaoty.person != null and seaoty.person != '' ">
+            and lend_by like '%'||#{seaoty.person}||'%'
+        </if>
+        <if test="seaoty.purpose != null and seaoty.purpose != '' ">
+            and jj_desc = #{seaoty.purpose}
+        </if>
+        <if test="seaoty.describe != null and seaoty.describe != '' ">
+            and description like '%'||#{seaoty.describe}||'%'
+        </if>
+        AND ROWNUM &lt;= #{page.endset} ORDER BY segment1
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+    <!--根据借单号查询借机头-->
+    <select id="findByNumber" resultMap="SaotyMap" parameterType="java.lang.String">
+        select h.*,t.description deptName,t1.description typeName from mes_lend_headers h
+        join mes.mes_lookups t on h.lend_dept = t.lookup_code
+        join mes.mes_lookups t1 on h.lend_type = t1.lookup_code
+        WHERE h.lend_number = #{num}
+    </select>
+
+    <!--根据借单号查询借机行-->
+    <select id="findLines" resultMap="DetailedMap" parameterType="java.lang.String">
+        select max(t.segment1) segment1,max(t.prod_type) prod_type,max(t.request_quantity) request_quantity,max(t.planned_return_date) planned_return_date,
+        max(t.from_subinventory_code) from_subinventory_code,max(t.to_subinventory_code) to_subinventory_code,max(t.to_locator) to_locator,max(t.description) description
+        from apps.mes_lend_lines_v t
+        WHERE lend_number = #{num}
+        group by segment1
+    </select>
+
+    <!--修改物流信息-->
+    <update id="updateHeader" parameterType="com.egdfrm.unit.model.stock.SeizeAnOpportunity">
+        UPDATE mes.mes_lend_headers SET express = #{seaoty.express},express_number = #{seaoty.expressNumber}
+        WHERE lend_number = #{seaoty.number}
+    </update>
+
+    <!--物流公司查询-->
+    <select id="queryExpress" resultType="java.util.Map">
+        select t.lookup_code,t.description
+          from mes.mes_lookups t
+          where t.lookup_type = 'SHIP_MTH'
+          and t.enabled_flag = 'Y'
+          and nvl(t.end_date_active, sysdate + 1) > sysdate
+    </select>
+
+    <update id="updateSale">
+        update mes.mes_lend_detail t set t.remarks = #{evaluation},t.actual_return_date = to_date(#{date},'yyyy-mm-dd hh24:mi:ss')
+        where t.detail_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id,jdbcType=NUMERIC}
+        </foreach>
+    </update>
+    
+    <select id="callSaleShip" parameterMap="inMap" statementType="CALLABLE" > 
+		{call apps.mes_lend_process_pkg.ship_lend(
+		#{userId,mode=IN,jdbcType=DECIMAL}, 
+		#{barcodeId,mode=IN,jdbcType=DECIMAL}, 
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)} 
+	</select>
+    <!-- inmap -->
+	 <parameterMap type="Map" id="inMap">
+	    <parameter property="headerID"  />
+	    <parameter property="lineId"  /> 
+	    <parameter property="dbreturn.xStatus" />
+	    <parameter property="dbreturn.xMessage" /> 
+	 </parameterMap>
+    
+    <select id="deleteHeader" parameterMap="inMap" statementType="CALLABLE" > 
+		{call apps.mes_lend_process_pkg.delete_lend(
+		#{headerId,mode=IN,jdbcType=DECIMAL}, 
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)} 
+	</select> 
+	<select id="deleteLine" parameterMap="inMap" statementType="CALLABLE" > 
+		{call apps.mes_lend_process_pkg.delete_lend_line(
+		#{lineId,mode=IN,jdbcType=DECIMAL}, 
+		#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+		)} 
+	</select> 
+    
+</mapper>

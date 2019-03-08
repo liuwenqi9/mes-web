@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.BorrowProductMapper" >
+  <!--PDA//借机-检查借机单号 -->
+  <select id="callCheckBorrowProductBill" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_lend_process_pkg.check_lend_number( 
+	  #{organizationId,mode=IN,jdbcType=DECIMAL},
+	  #{lendNumber,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//借机-检查产品条码 -->
+  <select id="callCheckProduct" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_lend_process_pkg.check_barcode(
+	#{organizationId,mode=IN,jdbcType=DECIMAL},
+	#{lendNumber,mode=IN,jdbcType=DECIMAL},
+	#{barcode,mode=IN,jdbcType=VARCHAR},
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//借机-提交-插入临时表 -->
+  <select id="callCommitInsertTempTable" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_lend_process_pkg.insert_mes_transaction_temp(
+	#{userId,mode=IN,jdbcType=DECIMAL},
+	#{processId,mode=IN,jdbcType=DECIMAL},
+	#{organizationId,mode=IN,jdbcType=DECIMAL},
+	#{lendNumber,mode=IN,jdbcType=VARCHAR},
+	#{barcode,mode=IN,jdbcType=VARCHAR},
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//借机-提交-处理临时表，插入正式表 -->
+  <select id="callCommitProcesTempTable" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_lend_process_pkg.process_data( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{expressNumber,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

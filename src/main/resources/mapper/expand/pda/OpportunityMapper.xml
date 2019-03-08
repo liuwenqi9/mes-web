@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.OpportunityMapper" >
+
+    <!--验证借机单号-->
+    <select id="getOpportunity" resultType="java.util.Map" parameterType="java.lang.String">
+        SELECT LH.* FROM MES.MES_LEND_HEADERS LH WHERE LH.LEND_NUMBER=#{parameter}
+    </select>
+
+    <!--验证产品条码是否正确-->
+    <select id="pdaCheckLend" parameterType="Map" statementType="CALLABLE">
+    {call apps.mes_barcodes_transfer_pkg.PDA_CHECK_LEND(
+    #{barcodeText,mode=IN,jdbcType=VARCHAR},
+    #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+  </select>
+
+    <!--取产品条码详细信息-->
+    <select id="getBarcodeTextInfo" resultType="java.util.Map" parameterType="java.lang.String">
+        SELECT MWB.BARCODE_TEXT,
+               MWB.LOCATTION_CODE OLD_LOCATTION_CODE,
+               B.SEGMENT1,
+               apps.mes_barcodes_pd_pkg.get_prod_type(b.inventory_item_id) PROD_TYPE,
+               B.DESCRIPTION
+                FROM MES.MES_LEND_DETAIL  L,
+                     MES.MES_WIP_BARCODES MWB,
+                     MES.MES_LEND_HEADERS H,
+                     APPS.MTL_SYSTEM_ITEMS_B B
+               WHERE B.ORGANIZATION_ID(+)=MWB.ORGANIZATION_ID
+                 AND B.INVENTORY_ITEM_ID(+)=MWB.PRIMARY_ITEM_ID
+                 AND L.HEADER_ID = H.HEADER_ID
+                 AND L.LINE_BARCODE_ID = MWB.WIP_BARCODE_ID
+                 AND MWB.BARCODE_TEXT =#{parameter}
+    </select>
+<!--借机归还-->
+    <select id="callMesBarcodesTransferLend" parameterMap="invMap" statementType="CALLABLE">
+        {call apps.mes_barcodes_transfer_pkg.mes_barcodes_transfer_lend(
+        #{processId,mode=IN,jdbcType=DECIMAL},
+        #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <parameterMap type="Map" id="invMap">
+        <parameter property="userId" />
+        <parameter property="processId" />
+        <parameter property="packingBarcodeId" />
+        <parameter property="oldLocation" />
+        <parameter property="newLocation" />
+        <parameter property="dbreturn.xStatus" />
+        <parameter property="dbreturn.xMessage" />
+    </parameterMap>
+
+</mapper>

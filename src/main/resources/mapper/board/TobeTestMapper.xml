@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.board.TobeTestMapper">
+
+    <resultMap id="TobeTestMap" type="com.egdfrm.unit.model.board.TobeTest">
+        <result column="wip_count" property="wip_count" jdbcType="NUMERIC"/>
+        
+        <result column="plan_line" property="plan_line" jdbcType="VARCHAR"/>
+        <result column="inspect_number" property="inspect_number" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="inspect_date" property="inspect_date" jdbcType="VARCHAR"/>
+        <result column="pack_count" property="pack_count" jdbcType="NUMERIC"/>
+        <result column="pack_quantity" property="pack_quantity" jdbcType="NUMERIC"/> 
+        
+        
+    </resultMap>
+
+    <!--查询待检验数据总数-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="java.lang.Integer">
+      select count(1) count FROM (
+        select to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd') inspect_date,
+		         plan_line,
+		         count(distinct wip_entity_name) wip_count,
+		         count(distinct barcode_text) pack_count,
+		         sum(pack_quantity) pack_quantity
+				    from apps.mes_packing_headers_check_v t
+				   where t.check_status = 'R'
+				     and organization_id = #{orgId}
+				   group by plan_line,
+				            to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd')
+				   order by to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd'),
+				            plan_line
+      )
+    </select>
+
+
+    <!--待检验分页查询-->
+    <select id="findPage" resultMap="TobeTestMap" parameterType="java.lang.Integer"> 
+       select * from (
+            select rownum rnum,t.* from ( 
+		        select to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd') inspect_date,
+		         plan_line,
+		         count(distinct wip_entity_name) wip_count,
+		         count(distinct barcode_text) pack_count,
+		         sum(pack_quantity) pack_quantity
+				    from apps.mes_packing_headers_check_v t
+				   where t.check_status = 'R'
+				     and organization_id = #{orgId}
+				   group by plan_line,
+				            to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd')
+				   order by to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd'),
+				            plan_line
+		        ) t where rownum &lt;= #{page.endset}
+        ) tmp where rnum &gt;= #{page.offset} 
+    </select>
+    
+    <select id="sum_findPage" resultMap="TobeTestMap" parameterType="java.lang.Integer"> 
+     
+            select sum(p.wip_count) wip_count, sum(p.pack_count) pack_count,sum(p.pack_quantity) pack_quantity from ( 
+		        select to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd') inspect_date,
+		         plan_line,
+		         count(distinct wip_entity_name) wip_count,
+		         count(distinct barcode_text) pack_count,
+		         sum(pack_quantity) pack_quantity
+				    from apps.mes_packing_headers_check_v t
+				   where t.check_status = 'R'
+				     and organization_id = #{orgId}
+				   group by plan_line,
+				            to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd')
+				   order by to_char(to_date(inspect_date, 'yyyy-mm-dd hh24:mi:ss'),
+				                    'yyyy-mm-dd'),
+				            plan_line ) p
+		         
+         
+    </select>
+
+
+    <!--查询所有待检验数据-->
+    <select id="finAll" resultMap="TobeTestMap" parameterType="java.lang.Integer">
+        select plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2,
+                count(barcode_text) pack_count,sum(pack_quantity) pack_quantity from apps.mes_packing_headers_check_v t
+                where t.check_status = 'R' and organization_id = #{orgId}
+                group by plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2
+                order by inspect_date
+    </select>
+    
+     <!--查询待检验数据总数(报表)-->
+    <select id="getCount2" resultType="java.lang.Long" parameterType="java.lang.Integer">
+      select count(1) count FROM (
+        select plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2,
+                count(barcode_text) pack_count,sum(pack_quantity) pack_quantity from apps.mes_packing_headers_check_v t
+                where t.check_status = 'R' and organization_id = #{orgId}
+                group by plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2
+                order by inspect_date
+      )
+    </select>
+ 
+    <!--待检验分页查询(报表)-->
+    <select id="findPage2" resultMap="TobeTestMap" parameterType="java.lang.Integer"> 
+       select * from (
+            select rownum rnum,t.* from ( 
+		        select plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2,
+                count(barcode_text) pack_count,sum(pack_quantity) pack_quantity from apps.mes_packing_headers_check_v t
+                where t.check_status = 'R' and organization_id = #{orgId}
+                group by plan_line,inspect_number,wip_entity_name,segment1,inspect_date,segment2
+                order by inspect_date
+		        ) t where rownum &lt;= #{page.endset}
+        ) tmp where rnum &gt;= #{page.offset} 
+    </select>
+    
+    
+</mapper>

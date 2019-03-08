@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.ProductBarcodeMapper">
+
+    <!--获取产品条码列表_总数据条数-->
+    <select id="getProductBarcodeByCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(*) total from apps.mes_wip_barcodes_v
+        WHERE 1=1
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            AND WIP_ENTITY_NAME = #{map.workOrderNumber}
+        </if>
+        <if test="map.productBarcode != '' and map.productBarcode != null">
+            AND BARCODE_TEXT IN  
+            	<foreach collection="map.productBarcode" item="productBarcode" open="(" separator="," close=")">
+		            #{productBarcode}
+		        </foreach>
+        </if>
+        <if test="map.barcodeStatus != '' and map.barcodeStatus != null">
+            AND BARCODE_STATUS = #{map.barcodeStatus}
+        </if>
+        <if test="map.printFlag != '' and map.printFlag != null">
+            AND PRINT_FLAG = #{map.printFlag}
+        </if>
+    </select>
+
+
+    <!--获取产品条码列表-->
+    <select id="getProductBarcode" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT WIP_ENTITY_NAME,SEGMENT1,DESCRIPTION,START_QUANTITY,PLAN_LINE_CODE,MO_ORDER,BARCODE_STATUS,MEANING,BARCODE_TEXT,PRINT_FLAG,ATTRIBUTE1,PACK from (
+            select ROWNUM rnum,WIP_ENTITY_NAME,SEGMENT1,DESCRIPTION,START_QUANTITY,PLAN_LINE_CODE,MO_ORDER,BARCODE_STATUS,MEANING,BARCODE_TEXT,PRINT_FLAG,ATTRIBUTE1,PACK
+            from apps.mes_wip_barcodes_v WHERE 1=1
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                AND WIP_ENTITY_NAME = #{map.workOrderNumber}
+            </if>
+            <if test="map.productBarcode != '' and map.productBarcode != null">
+                AND BARCODE_TEXT IN
+                <foreach collection="map.productBarcode" item="productBarcode" open="(" separator="," close=")">
+		            #{productBarcode}
+		        </foreach>
+            </if>
+            <if test="map.barcodeStatus != '' and map.barcodeStatus != null">
+                AND BARCODE_STATUS = #{map.barcodeStatus}
+            </if>
+            <if test="map.printFlag != '' and map.printFlag != null">
+                AND PRINT_FLAG = #{map.printFlag}
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+
+    <!--条码生成-->
+    <select id="barcodeProduction" statementType="CALLABLE" parameterType="java.util.Map">
+      { call apps.mes_wip_barcodes_pkg.create_wip_2d_barcode(#{map.p_organization_id,mode=IN,jdbcType=NUMERIC},
+        #{map.p_wip_entity_id,mode=IN,jdbcType=VARCHAR},#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+      ) }
+    </select>
+
+    <!--查询工单总数-->
+    <select id="getWorkOrderByCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count
+        from wip.wip_entities we,wip.wip_discrete_jobs wdj,apps.mtl_system_items_b m
+        where (wdj.class_code like 'BZ%' or wdj.class_code in ('PC_FB', 'RW_FB', 'RM_FB', 'EN_BZ'))
+        and wdj.wip_entity_id = we.wip_entity_id
+        and wdj.status_type = 3
+        and m.organization_id = we.organization_id
+        and m.inventory_item_id = wdj.primary_item_id
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            AND we.wip_entity_name LIKE '%'||#{map.workOrderNumber}||'%'
+        </if>
+    </select>
+
+    <!--工单分页查询-->
+    <select id="getWorkOrderByPage" resultType="java.util.Map" parameterType="java.util.Map">
+        select wip_entity_id,wip_entity_name from (
+            select rownum rnum,we.wip_entity_id,wip_entity_name
+            from wip.wip_entities we,wip.wip_discrete_jobs wdj,apps.mtl_system_items_b m
+            where (wdj.class_code like 'BZ%' or wdj.class_code in ('PC_FB', 'RW_FB', 'RM_FB', 'EN_BZ'))
+            and wdj.wip_entity_id = we.wip_entity_id
+            and wdj.status_type = 3
+            and m.organization_id = we.organization_id
+            and m.inventory_item_id = wdj.primary_item_id
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                AND we.wip_entity_name LIKE '%'||#{map.workOrderNumber}||'%'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} order by wip_entity_id
+    </select>
+
+    <select id="getWorkOrderByPage1" resultType="java.util.Map" parameterType="java.util.Map">
+        select wip_entity_id,wip_entity_name from (
+            select ROWNUM rnum,we.wip_entity_id,we.wip_entity_name
+            from wip.wip_entities we,wip.wip_discrete_jobs wdj,apps.mtl_system_items_b ms
+            where we.wip_entity_id = wdj.wip_entity_id
+            and ms.inventory_item_id = wdj.primary_item_id
+            and ms.organization_id = wdj.organization_id
+            and wdj.status_type = 3
+            and substr(ms.segment1, 1, 2) in ('18', '19')
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                AND we.wip_entity_name LIKE '%'||#{map.workOrderNumber}||'%'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} order by wip_entity_id
+    </select>
+
+    <!--条码作废-->
+    <select id="abolish" statementType="CALLABLE" parameterType="java.util.Map">
+      { call apps.mes_wip_barcodes_pkg.invalid_barcode(#{map.p_organization_id,mode=IN,jdbcType=NUMERIC},
+        #{map.p_user_id,mode=IN,jdbcType=NUMERIC},#{map.p_barcode,mode=IN,jdbcType=VARCHAR},#{map.invalidReason,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+      ) }
+    </select>
+
+    <!--获取条码状态-->
+    <select id="getBarcodeStatus" resultType="java.lang.String">
+        select ml.description status from mes.mes_lookups ml where ml.lookup_type = 'BARCODE_STATUS'
+    </select>
+
+    <!--修改条码打印状态-->
+    <update id="updatePrintStatus" parameterType="java.util.Arrays">
+        update mes.mes_wip_barcodes t
+           set print_flag = 'Y'
+         where barcode_text IN
+         <foreach collection="codes" item="code" open="(" separator="," close=")">
+             #{code}
+         </foreach>
+    </update>
+</mapper>

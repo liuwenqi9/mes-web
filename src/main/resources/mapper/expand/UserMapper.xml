@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.UserMapper" >
+ 
+  <!-- 获取生产线列表 -->
+  <select id="getPlanLines"  resultType="map">
+	SELECT FLEX_VALUE,
+	       FLEX_VALUE_MEANING,
+	       DESCRIPTION PLANLINEDESC,
+	       ENABLED_FLAG,
+	       START_DATE_ACTIVE,
+	       END_DATE_ACTIVE
+	  FROM APPS.FND_FLEX_VALUES_VL
+	 WHERE (('' IS NULL) OR
+	       (STRUCTURED_HIERARCHY_LEVEL IN
+	       (SELECT HIERARCHY_ID
+	            FROM APPS.FND_FLEX_HIERARCHIES_VL H
+	           WHERE H.FLEX_VALUE_SET_ID = 1011484
+	             AND H.HIERARCHY_NAME LIKE '')))
+	   AND (FLEX_VALUE_SET_ID = 1011484)
+	 ORDER BY FLEX_VALUE
+  </select>
+  
+   <!-- 根据用户名获取生产线 -->
+  <select id="getPlanLineByLoginName"  resultType="map" parameterType="java.lang.String">
+			 SELECT FLEX_VALUE,
+		       FLEX_VALUE_MEANING,
+		       DESCRIPTION PLANLINEDESC,
+		       ENABLED_FLAG,
+		       START_DATE_ACTIVE,
+		       END_DATE_ACTIVE
+		  FROM APPS.FND_FLEX_VALUES_VL
+		 WHERE (('' IS NULL) OR
+		       (STRUCTURED_HIERARCHY_LEVEL IN
+		       (SELECT HIERARCHY_ID
+		            FROM APPS.FND_FLEX_HIERARCHIES_VL H
+		           WHERE H.FLEX_VALUE_SET_ID = 1011484
+		             AND H.HIERARCHY_NAME LIKE '')))
+		   AND (FLEX_VALUE_SET_ID = 1011484)
+		      
+		   AND FLEX_VALUE_MEANING =
+		       (SELECT U.PLAN_LINE_CODE
+		          FROM MES.TT_APPLICATION_USER U
+		         WHERE U.LOGIN_NAME = #{loginName,jdbcType=VARCHAR})
+		 ORDER BY FLEX_VALUE
+  </select>
+ <!-- 根据loginName获取角色代码role_code --> 
+  <select id="getRoleCodeByLoginName"  resultType="map" parameterType="java.lang.String">
+  select us.role_code from mes.tt_user_role us where us.login_name= #{loginName,jdbcType=VARCHAR}
+  </select>
+  
+  <!-- 根据loginName获取角色代码PLAN_LINE_CODE --> 
+  <select id="getPlanLineCodeCodeByLoginName"  resultType="map" parameterType="java.lang.String">
+  select nvl(es.plan_line_code,'0') plan_line_code
+  from mes.tt_application_user es where es.login_name= #{loginName,jdbcType=VARCHAR}
+  </select>
+  
+</mapper>

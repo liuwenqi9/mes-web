@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:util="http://www.springframework.org/schema/util" xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 安全管理器 -->
+    <!-- 注释掉sessionManager和cacheManager则为[内存会话] -->
+    <!-- 去注释sessionManager和cacheManager则为[集群会话] -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="realm" />
+        <!-- <property name="sessionManager" ref="sessionManager" /> -->
+        <!-- <property name="cacheManager" ref="cacheManager" /> -->
+    </bean>
+
+    <!-- shiro过滤器 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager" />
+        <property name="loginUrl" value="/login" />
+        <property name="unauthorizedUrl" value="/login"></property>
+        <property name="filters">
+            <util:map>
+                <entry key="authc" value-ref="formAuthenticationFilter" />
+                <entry key="bindLoginNameFilter" value-ref="bindLoginNameFilter" />
+            </util:map>
+        </property>
+        <property name="filterChainDefinitions">
+            <value>
+                /static/** = anon
+                /services/* = anon
+                /login = authc
+                /logout = logout
+                /** = user,bindLoginNameFilter
+            </value>
+        </property>
+    </bean>
+
+    <import resource="classpath*:egdfrm/spring/spring-shiro.xml" />
+</beans>

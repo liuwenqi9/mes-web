@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.CompleteMapper" >
+ 
+  <!-- PDA工单完工入库-获取建议货位 -->
+  <select id="getAdviseLocations" parameterType="java.math.BigDecimal" resultType="String">
+	SELECT apps.mes_wip_barcodes_complete_pkg.get_inv_locattions(#{packBarcodeId,jdbcType=NUMERIC}) FROM dual
+  </select>
+  <!-- PDA工单完工入库-获取建议货位 -->
+  <select id="completeScanLocations" parameterType="java.math.BigDecimal" resultType="com.egdfrm.unit.model.expand.pda.WoInStorage">
+	SELECT WE.WIP_ENTITY_NAME WORKNO,
+	       MSIB.SEGMENT1 LOTNO,
+	       SUM(NVL(PL.QUANTITY, 0)) NUM
+	  FROM MES.MES_PACKING_HEADERS PH
+	  LEFT JOIN APPS.MTL_SYSTEM_ITEMS_B MSIB
+	    ON PH.ORGANIZATION_ID = MSIB.ORGANIZATION_ID
+	   AND PH.INVENTORY_ITEM_ID = MSIB.INVENTORY_ITEM_ID
+	  LEFT JOIN WIP.WIP_ENTITIES WE
+	    ON WE.WIP_ENTITY_ID = PH.WIP_ENTITY_ID
+	  LEFT JOIN MES.MES_PACKING_LINES PL
+	    ON PH.PACKING_BARCODE_ID = PL.PACKING_BARCODE_ID
+	 WHERE PH.PACKING_BARCODE_ID = #{packBarcodeId,jdbcType=NUMERIC}
+	 GROUP BY PH.PACKING_BARCODE_ID, WE.WIP_ENTITY_NAME, MSIB.SEGMENT1
+  </select>
+  
+   <parameterMap type="Map" id="completeMap">
+    <parameter property="userId"  />
+    <parameter property="processId"  />
+    <parameter property="packingBarcodeId"  />
+    <parameter property="locator"  /> 
+    <parameter property="dbreturn.xStatus" />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+   <parameterMap type="Map" id="checkLocationMap">
+    <parameter property="orgId"  />
+    <parameter property="location"  />
+    
+    <parameter property="dbreturn.xStatus" />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+  <!--PDA工单完工入库-循环提交 -->
+  <select id="callInvInsertTransactionTemp" parameterMap="completeMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_complete_pkg.inv_insert_transaction_temp( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=INOUT,jdbcType=DECIMAL},
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  NULL,
+	  #{locator,mode=IN,jdbcType=VARCHAR},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select> 
+  <!--PDA工单完工入库-更新产品条码 -->
+  <select id="callWipCompleteTransaction" parameterMap="completeMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_complete_pkg.wip_complete_transaction( 
+	  #{processId,mode=INOUT,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA工单完工入库-检查货位 -->
+  <select id="callCheckLocation" parameterMap="checkLocationMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_complete_pkg.check_pda_locattions( 
+	  #{orgId,mode=IN,jdbcType=DECIMAL},
+	  #{location,mode=IN,jdbcType=VARCHAR},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA工单完工入库-检查包装箱是否可以入库 @hgb 2018-01-25 加一个货位  -->
+  <select id="callCheckCanInStock" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_complete_pkg.check_pda_pack_barcode_lc(
+	  #{packBarcode,mode=IN,jdbcType=VARCHAR},
+	  #{locations,mode=IN,jdbcType=VARCHAR},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

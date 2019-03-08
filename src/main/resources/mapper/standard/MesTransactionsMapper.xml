@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.MesTransactionsMapper" >
+  <resultMap id="BaseResultMap" type="com.egdfrm.unit.model.standard.MesTransactions" >
+    <result column="TRANSACTION_ID" property="transactionId" jdbcType="DECIMAL" />
+    <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+    <result column="TRANSACTION_TYPE" property="transactionType" jdbcType="VARCHAR" />
+    <result column="SOURCE_ID" property="sourceId" jdbcType="DECIMAL" />
+    <result column="PACKING_TYPE" property="packingType" jdbcType="VARCHAR" />
+    <result column="PACKING_BARCODE_ID" property="packingBarcodeId" jdbcType="DECIMAL" />
+    <result column="BARCODE_TEXT" property="barcodeText" jdbcType="VARCHAR" />
+    <result column="INVENTORY_ITEM_ID" property="inventoryItemId" jdbcType="DECIMAL" />
+    <result column="SUBINVENTORY_CODE" property="subinventoryCode" jdbcType="VARCHAR" />
+    <result column="LOCATTION_CODE" property="locattionCode" jdbcType="VARCHAR" />
+    <result column="TRANSFER_SUBINVENTORY" property="transferSubinventory" jdbcType="VARCHAR" />
+    <result column="TRANSFER_ORGANIZATION_ID" property="transferOrganizationId" jdbcType="DECIMAL" />
+    <result column="TRANSFER_LOCATOR" property="transferLocator" jdbcType="VARCHAR" />
+    <result column="TRANSACTION_DATE" property="transactionDate" jdbcType="DATE" />
+    <result column="TRANSACTION_QUANTITY" property="transactionQuantity" jdbcType="DECIMAL" />
+    <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+    <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+    <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    TRANSACTION_ID, ORGANIZATION_ID, TRANSACTION_TYPE, SOURCE_ID, PACKING_TYPE, PACKING_BARCODE_ID, 
+    BARCODE_TEXT, INVENTORY_ITEM_ID, SUBINVENTORY_CODE, LOCATTION_CODE, TRANSFER_SUBINVENTORY, 
+    TRANSFER_ORGANIZATION_ID, TRANSFER_LOCATOR, TRANSACTION_DATE, TRANSACTION_QUANTITY, 
+    LAST_UPDATE_DATE, LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.egdfrm.unit.model.standard.MesTransactionsCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MES_TRANSACTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.unit.model.standard.MesTransactionsCriteria" >
+    delete from MES_TRANSACTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.egdfrm.unit.model.standard.MesTransactions" >
+    insert into MES_TRANSACTIONS (TRANSACTION_ID, ORGANIZATION_ID, TRANSACTION_TYPE, 
+      SOURCE_ID, PACKING_TYPE, PACKING_BARCODE_ID, 
+      BARCODE_TEXT, INVENTORY_ITEM_ID, SUBINVENTORY_CODE, 
+      LOCATTION_CODE, TRANSFER_SUBINVENTORY, TRANSFER_ORGANIZATION_ID, 
+      TRANSFER_LOCATOR, TRANSACTION_DATE, TRANSACTION_QUANTITY, 
+      LAST_UPDATE_DATE, LAST_UPDATED_BY, CREATION_DATE, 
+      CREATED_BY)
+    values (#{transactionId,jdbcType=DECIMAL}, #{organizationId,jdbcType=DECIMAL}, #{transactionType,jdbcType=VARCHAR}, 
+      #{sourceId,jdbcType=DECIMAL}, #{packingType,jdbcType=VARCHAR}, #{packingBarcodeId,jdbcType=DECIMAL}, 
+      #{barcodeText,jdbcType=VARCHAR}, #{inventoryItemId,jdbcType=DECIMAL}, #{subinventoryCode,jdbcType=VARCHAR}, 
+      #{locattionCode,jdbcType=VARCHAR}, #{transferSubinventory,jdbcType=VARCHAR}, #{transferOrganizationId,jdbcType=DECIMAL}, 
+      #{transferLocator,jdbcType=VARCHAR}, #{transactionDate,jdbcType=DATE}, #{transactionQuantity,jdbcType=DECIMAL}, 
+      #{lastUpdateDate,jdbcType=DATE}, #{lastUpdatedBy,jdbcType=DECIMAL}, #{creationDate,jdbcType=DATE}, 
+      #{createdBy,jdbcType=DECIMAL})
+  </insert>
+  <insert id="insertSelective" parameterType="com.egdfrm.unit.model.standard.MesTransactions" >
+    insert into MES_TRANSACTIONS
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="transactionId != null" >
+        TRANSACTION_ID,
+      </if>
+      <if test="organizationId != null" >
+        ORGANIZATION_ID,
+      </if>
+      <if test="transactionType != null" >
+        TRANSACTION_TYPE,
+      </if>
+      <if test="sourceId != null" >
+        SOURCE_ID,
+      </if>
+      <if test="packingType != null" >
+        PACKING_TYPE,
+      </if>
+      <if test="packingBarcodeId != null" >
+        PACKING_BARCODE_ID,
+      </if>
+      <if test="barcodeText != null" >
+        BARCODE_TEXT,
+      </if>
+      <if test="inventoryItemId != null" >
+        INVENTORY_ITEM_ID,
+      </if>
+      <if test="subinventoryCode != null" >
+        SUBINVENTORY_CODE,
+      </if>
+      <if test="locattionCode != null" >
+        LOCATTION_CODE,
+      </if>
+      <if test="transferSubinventory != null" >
+        TRANSFER_SUBINVENTORY,
+      </if>
+      <if test="transferOrganizationId != null" >
+        TRANSFER_ORGANIZATION_ID,
+      </if>
+      <if test="transferLocator != null" >
+        TRANSFER_LOCATOR,
+      </if>
+      <if test="transactionDate != null" >
+        TRANSACTION_DATE,
+      </if>
+      <if test="transactionQuantity != null" >
+        TRANSACTION_QUANTITY,
+      </if>
+      <if test="lastUpdateDate != null" >
+        LAST_UPDATE_DATE,
+      </if>
+      <if test="lastUpdatedBy != null" >
+        LAST_UPDATED_BY,
+      </if>
+      <if test="creationDate != null" >
+        CREATION_DATE,
+      </if>
+      <if test="createdBy != null" >
+        CREATED_BY,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="transactionId != null" >
+        #{transactionId,jdbcType=DECIMAL},
+      </if>
+      <if test="organizationId != null" >
+        #{organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="transactionType != null" >
+        #{transactionType,jdbcType=VARCHAR},
+      </if>
+      <if test="sourceId != null" >
+        #{sourceId,jdbcType=DECIMAL},
+      </if>
+      <if test="packingType != null" >
+        #{packingType,jdbcType=VARCHAR},
+      </if>
+      <if test="packingBarcodeId != null" >
+        #{packingBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="barcodeText != null" >
+        #{barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="inventoryItemId != null" >
+        #{inventoryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="subinventoryCode != null" >
+        #{subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="locattionCode != null" >
+        #{locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="transferSubinventory != null" >
+        #{transferSubinventory,jdbcType=VARCHAR},
+      </if>
+      <if test="transferOrganizationId != null" >
+        #{transferOrganizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="transferLocator != null" >
+        #{transferLocator,jdbcType=VARCHAR},
+      </if>
+      <if test="transactionDate != null" >
+        #{transactionDate,jdbcType=DATE},
+      </if>
+      <if test="transactionQuantity != null" >
+        #{transactionQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="lastUpdatedBy != null" >
+        #{lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="creationDate != null" >
+        #{creationDate,jdbcType=DATE},
+      </if>
+      <if test="createdBy != null" >
+        #{createdBy,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.egdfrm.unit.model.standard.MesTransactionsCriteria" resultType="java.lang.Integer" >
+    select count(*) from MES_TRANSACTIONS
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update MES_TRANSACTIONS
+    <set >
+      <if test="record.transactionId != null" >
+        TRANSACTION_ID = #{record.transactionId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.organizationId != null" >
+        ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.transactionType != null" >
+        TRANSACTION_TYPE = #{record.transactionType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sourceId != null" >
+        SOURCE_ID = #{record.sourceId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.packingType != null" >
+        PACKING_TYPE = #{record.packingType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.packingBarcodeId != null" >
+        PACKING_BARCODE_ID = #{record.packingBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.barcodeText != null" >
+        BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="record.inventoryItemId != null" >
+        INVENTORY_ITEM_ID = #{record.inventoryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.subinventoryCode != null" >
+        SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.locattionCode != null" >
+        LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.transferSubinventory != null" >
+        TRANSFER_SUBINVENTORY = #{record.transferSubinventory,jdbcType=VARCHAR},
+      </if>
+      <if test="record.transferOrganizationId != null" >
+        TRANSFER_ORGANIZATION_ID = #{record.transferOrganizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.transferLocator != null" >
+        TRANSFER_LOCATOR = #{record.transferLocator,jdbcType=VARCHAR},
+      </if>
+      <if test="record.transactionDate != null" >
+        TRANSACTION_DATE = #{record.transactionDate,jdbcType=DATE},
+      </if>
+      <if test="record.transactionQuantity != null" >
+        TRANSACTION_QUANTITY = #{record.transactionQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="record.lastUpdateDate != null" >
+        LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="record.lastUpdatedBy != null" >
+        LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.creationDate != null" >
+        CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      </if>
+      <if test="record.createdBy != null" >
+        CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update MES_TRANSACTIONS
+    set TRANSACTION_ID = #{record.transactionId,jdbcType=DECIMAL},
+      ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      TRANSACTION_TYPE = #{record.transactionType,jdbcType=VARCHAR},
+      SOURCE_ID = #{record.sourceId,jdbcType=DECIMAL},
+      PACKING_TYPE = #{record.packingType,jdbcType=VARCHAR},
+      PACKING_BARCODE_ID = #{record.packingBarcodeId,jdbcType=DECIMAL},
+      BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      INVENTORY_ITEM_ID = #{record.inventoryItemId,jdbcType=DECIMAL},
+      SUBINVENTORY_CODE = #{record.subinventoryCode,jdbcType=VARCHAR},
+      LOCATTION_CODE = #{record.locattionCode,jdbcType=VARCHAR},
+      TRANSFER_SUBINVENTORY = #{record.transferSubinventory,jdbcType=VARCHAR},
+      TRANSFER_ORGANIZATION_ID = #{record.transferOrganizationId,jdbcType=DECIMAL},
+      TRANSFER_LOCATOR = #{record.transferLocator,jdbcType=VARCHAR},
+      TRANSACTION_DATE = #{record.transactionDate,jdbcType=DATE},
+      TRANSACTION_QUANTITY = #{record.transactionQuantity,jdbcType=DECIMAL},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

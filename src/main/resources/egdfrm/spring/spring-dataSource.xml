@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- jdbc 数据库访问 -->
+     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+         <property name="driverClassName" value="${connection.driverClassName}"/>
+         <property name="url" value="${connection.url}"/>
+         <property name="username" value="${connection.username}"/>
+         <property name="password" value="${connection.password}"
+         />
+     </bean>
+    <!-- c3p0 数据连接池-->
+  <!--  <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+
+        <property name="driverClass" value="${connection.driverClassName}"></property>
+        <property name="jdbcUrl" value="${connection.url}"></property>
+        <property name="user" value="${connection.username}"></property>
+        <property name="password" value="${connection.password}"></property>
+
+        &lt;!&ndash; 详细参数说明参见database-config.properties &ndash;&gt;
+        &lt;!&ndash;初始化时获取的连接数&ndash;&gt;
+        <property name="initialPoolSize" value="5"></property>
+        <property name="minPoolSize" value="10"></property>
+        <property name="maxPoolSize" value="25"></property>
+        &lt;!&ndash;最大空闲时间,60*10秒内未使用则连接被丢弃。&ndash;&gt;
+        <property name="maxIdleTime" value="600"></property>
+        &lt;!&ndash;当连接池中的连接耗尽的时候c3p0一次同时获取的连接数&ndash;&gt;
+        <property name="acquireIncrement" value="20"></property>
+        &lt;!&ndash;每60秒检查所有连接池中的空闲连接&ndash;&gt;
+        <property name="idleConnectionTestPeriod" value="600"></property>
+        &lt;!&ndash;定义在从数据库获取新连接失败后重复尝试的次数 &ndash;&gt;
+        <property name="acquireRetryAttempts" value="20"></property>
+        <property name="breakAfterAcquireFailure" value="true"></property>
+        &lt;!&ndash;##JDBC的标准参数，用以控制数据源内加载的PreparedStatements数量。但由于预缓存的statements
+            属于单个connection而不是整个连接池。所以设置这个参数需要考虑到多方面的因素。
+            如果maxStatements与maxStatementsPerConnection均为0，则缓存被关闭。Default: 0&ndash;&gt;
+        <property name="maxStatements" value="0"></property>
+        &lt;!&ndash;如果设为true那么在取得连接的同时将校验连接的有效性。默认为false&ndash;&gt;
+        <property name="testConnectionOnCheckout" value="true"></property>
+    </bean>-->
+    <!-- DRUID  数据连接池-->
+    <!--  <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+          <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+          <property name="url" value="jdbc:oracle:thin:@192.168.1.82:1526:TEST" />
+          <property name="username" value="mes" />
+          <property name="password" value="mes123" />
+          &lt;!&ndash; 配置初始化大小、最小、最大 &ndash;&gt;
+          <property name="initialSize" value="5" />
+          <property name="minIdle" value="1" />
+          <property name="maxActive" value="20" />
+          &lt;!&ndash; 配置获取连接等待超时的时间 &ndash;&gt;
+          <property name="maxWait" value="10000" />
+          &lt;!&ndash; 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 &ndash;&gt;
+          <property name="timeBetweenEvictionRunsMillis" value="60000" />
+          &lt;!&ndash; 配置一个连接在池中最小生存的时间，单位是毫秒 &ndash;&gt;
+          <property name="minEvictableIdleTimeMillis" value="300000" />
+          <property name="testWhileIdle" value="true" />
+          &lt;!&ndash; 这里建议配置为TRUE，防止取到的连接不可用 &ndash;&gt;
+          <property name="testOnBorrow" value="true" />
+          <property name="testOnReturn" value="false" />
+          &lt;!&ndash; 打开PSCache，并且指定每个连接上PSCache的大小 &ndash;&gt;
+          <property name="poolPreparedStatements" value="true" />
+          <property name="maxPoolPreparedStatementPerConnectionSize" value="20" />
+          &lt;!&ndash; 验证连接有效与否的SQL，不同的数据配置不同 &ndash;&gt;
+          <property name="validationQuery" value="SELECT 1 " />
+          <property name="filters" value="stat" />
+      </bean>-->
+
+</beans>

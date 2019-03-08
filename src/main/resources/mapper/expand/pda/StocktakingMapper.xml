@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.StocktakingMapper" >
+ 
+ <!---->
+  <select id="callCheckBarcode" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_barcodes_pd_pkg.check_barcode( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+ 
+ 
+  <!-- PDA子库存转移-据包装条码Id获取物料编码和描述 -->
+  <select id="getItemidByPackBarcodeId" parameterType="java.math.BigDecimal" resultType="com.egdfrm.unit.model.expand.pda.StorageTransfer">
+	SELECT MSIB.SEGMENT1 LOTNO, MSIB.DESCRIPTION DESR
+	  FROM MES.MES_PACKING_HEADERS PH
+	  LEFT JOIN APPS.MTL_SYSTEM_ITEMS_B MSIB
+	    ON PH.ORGANIZATION_ID = MSIB.ORGANIZATION_ID
+	   AND PH.INVENTORY_ITEM_ID = MSIB.INVENTORY_ITEM_ID
+	 WHERE PH.PACKING_BARCODE_ID = #{packBarcodeId,jdbcType=NUMERIC}
+  </select>
+   <parameterMap type="Map" id="invMap">
+    <parameter property="userId"  />
+    <parameter property="processId"  />
+    <parameter property="packingBarcodeId"  />
+    <parameter property="oldLocation"  /> 
+    <parameter property="newLocation"  />
+    <parameter property="dbreturn.xStatus" />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+  <!--PDA子库存转移-提交-写入MES临时接口表-->
+  <select id="callTranInsertTransactionTemp" parameterMap="invMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_transfer_pkg.tran_insert_transaction_temp( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{oldLocation,mode=IN,jdbcType=VARCHAR},
+	  #{newLocation,mode=IN,jdbcType=VARCHAR}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA子库存转移-提交-子库存/货位转移-->
+  <select id="callMesBarcodesTransfer" parameterMap="invMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_transfer_pkg.mes_barcodes_transfer( 
+	  #{processId,mode=IN,jdbcType=DECIMAL}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+ 
+  <!--PDA盘点提交-->
+  <select id="callStocktakingCommit" parameterMap="invMap" statementType="CALLABLE">
+
+	{ call apps.mes_barcodes_pd_pkg.pd_line(
+	#{organizationId,mode=IN,jdbcType=NUMERIC    },
+	#{pdNumber,mode=IN,jdbcType=VARCHAR},
+	#{userId,mode=IN,jdbcType=NUMERIC    },
+	#{location,mode=IN,jdbcType=VARCHAR},
+	#{barcodeId,mode=IN,jdbcType=NUMERIC    },
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+
+  </select>
+ 
+</mapper>

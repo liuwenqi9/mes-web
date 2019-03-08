@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.PickExceptionMapper">
+
+    <resultMap id="result" type="com.egdfrm.unit.excelmodel.PickException">
+        <result column="source_header_number" property="source_header_number" jdbcType="VARCHAR" />
+        <result column="customer_name" property="customer_name" jdbcType="VARCHAR" />
+        <result column="request_number" property="request_number" jdbcType="VARCHAR" />
+        <result column="segment1" property="segment1" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" /> 
+        <result column="prod_type" property="prod_type" jdbcType="VARCHAR" />
+        <result column="pick_date" property="pick_date" jdbcType="VARCHAR" />
+        <result column="move_order_quantity" property="move_order_quantity" jdbcType="NUMERIC" />
+        <result column="mes_pick_quantity" property="mes_pick_quantity" jdbcType="NUMERIC" />
+        <result column="erp_picked_quantity" property="erp_picked_quantity" jdbcType="NUMERIC" />
+        <result column="mes_ship_quantity" property="mes_ship_quantity" jdbcType="NUMERIC" />
+        <result column="erp_ship_quantity" property="erp_ship_quantity" jdbcType="NUMERIC" /> 
+    </resultMap>
+
+ 
+    <select id="findPageCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.excelmodel.PickException">
+        select count(1) from apps.mes_erp_pick_ship_check 
+			where  ( (erp_picked_quantity &lt;&gt; mes_pick_quantity) or
+						  (erp_ship_quantity &lt;&gt; mes_ship_quantity) or
+						  (mes_pick_quantity &lt;&gt; mes_ship_quantity )	
+					  )	
+        <if test="pick.source_header_number != null and pick.source_header_number != ''">
+            AND source_header_number =  #{pick.source_header_number}
+        </if>
+        <if test="pick.request_number != null and pick.request_number != ''">
+            AND request_number =  #{pick.request_number}
+        </if>
+        
+    </select>
+ 
+    <select id="findPage" resultMap="result" parameterType="com.egdfrm.unit.excelmodel.PickException">
+      SELECT * from (
+         select ROWNUM rnum, source_header_number   
+				, customer_name                
+				, request_number               
+				, segment1                     
+				, description                
+				, prod_type                   
+				, pick_date                   
+				, move_order_quantity          
+				, mes_pick_quantity           
+				, erp_picked_quantity          
+				, mes_ship_quantity            
+				, erp_ship_quantity           
+				 from apps.mes_erp_pick_ship_check
+				where  ( (erp_picked_quantity &lt;&gt; mes_pick_quantity) or
+						  (erp_ship_quantity &lt;&gt; mes_ship_quantity) or
+						  (mes_pick_quantity &lt;&gt; mes_ship_quantity )	
+					  )	
+							    
+		<if test="pick.source_header_number != null and pick.source_header_number != ''">
+            AND source_header_number =  #{pick.source_header_number}
+        </if>
+        <if test="pick.request_number != null and pick.request_number != ''">
+            AND request_number =  #{pick.request_number}
+        </if>		
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset} 
+        
+    </select>
+
+
+    <select id="export" resultMap="result" parameterType="com.egdfrm.unit.excelmodel.PickException">
+        select  source_header_number   
+				, customer_name                
+				, request_number               
+				, segment1                     
+				, description                
+				, prod_type                   
+				, pick_date                   
+				, move_order_quantity          
+				, mes_pick_quantity           
+				, erp_picked_quantity          
+				, mes_ship_quantity            
+				, erp_ship_quantity           
+				 from apps.mes_erp_pick_ship_check
+				where ( (erp_picked_quantity &lt;&gt; mes_pick_quantity) or
+						  (erp_ship_quantity &lt;&gt; mes_ship_quantity) or
+						  (mes_pick_quantity &lt;&gt; mes_ship_quantity )	
+					  )		  
+							    
+		<if test="pick.source_header_number != null and pick.source_header_number != ''">
+            AND source_header_number =  #{pick.source_header_number}
+        </if>
+        <if test="pick.request_number != null and pick.request_number != ''">
+            AND request_number =  #{pick.request_number}
+        </if>	
+    </select>
+</mapper>

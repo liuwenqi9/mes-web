@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.commonSetting.SublibraryMapper" >
+ 
+  <!-- 获取子库列表 -->
+  <select id="getSublibraryList" parameterType="String" resultType="map">
+  <![CDATA[
+	SELECT (CASE
+	         WHEN T.DISABLE_DATE < SYSDATE THEN
+	          '无效'
+	         ELSE
+	          '有效'
+	       END) STATUS,
+	       DECODE(T.LOCATOR_TYPE, 1, 'N', 'Y') ISENABLED,
+           TO_CHAR(T.DISABLE_DATE, 'YYYY-MM-DD HH24:MI:SS') FMT_DISABLE_DATE,
+	       T.*
+	  FROM APPS.MTL_SUBINVENTORIES_ALL_V T
+	 WHERE 1=1 
+	 AND (T.DISABLE_DATE > SYSDATE OR T.DISABLE_DATE IS NULL)
+	]]> 
+    <if test="sublibraryName != null and sublibraryName != ''" >
+	   AND T.SECONDARY_INVENTORY_NAME = #{sublibraryName,jdbcType=VARCHAR}
+    </if>
+  <![CDATA[
+ 	 ORDER BY T.SECONDARY_INVENTORY_NAME ASC
+	]]>
+  </select>
+  
+</mapper>

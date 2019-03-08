@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxws="http://cxf.apache.org/jaxws"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+
+	<!-- 自定义拦截器 ,拦截不合法Ip地址 -->
+	<bean id="ipInterceptor" class="com.egdfrm.extend.interceptors.IpAddressInInterceptor">
+		<!-- 合法的IP地址,限制了外网只能 47.52.110.88 、 120.77.250.255 、121.12.128.206 以及优利德内网 可以访问。其他限制-->
+		<property name="ipList">
+			<util:list list-class="java.util.ArrayList">
+				<value>120.77.250.255</value> <!--阿里云 国内经销商服务器IP地址-->
+				<value>47.52.110.88</value>   <!--阿里云 海外经销商服务器IP地址-->
+				<value>121.12.128.206</value>   <!--阿里云 优利德外网IP地址-->
+				<value>47.52.114.41</value>   <!--阿里云 海外经销商服务器IP地址-->
+			</util:list>
+		</property>
+	</bean>
+	<!-- PDA  WEBSERVICE -->
+	<jaxws:endpoint id="pdaService" address="/PDAService" >
+		<jaxws:implementor>
+			<bean class="com.egdfrm.unit.ws.PDAServiceImpl"/>
+		</jaxws:implementor>
+		<jaxws:inInterceptors>
+			<ref bean="ipInterceptor"/>
+		</jaxws:inInterceptors>
+	</jaxws:endpoint>
+
+	<!-- CRM  WEBSERVICE -->
+	<jaxws:endpoint id="crmService" address="/CRMService" >
+		<jaxws:implementor>
+			<bean class="com.egdfrm.unit.ws.CRMServiceImpl"/>
+		</jaxws:implementor>
+		<jaxws:inInterceptors>
+			<ref bean="ipInterceptor"/>
+		</jaxws:inInterceptors>
+	</jaxws:endpoint>
+
+	<!--海外经销商webservice 配置-->
+	<jaxws:endpoint id="overseasDistributorService" address="/OverseasDistributorService" >
+		<jaxws:implementor>
+			<bean class="com.egdfrm.unit.ws.OverseasDistributorServiceImpl"/>
+		</jaxws:implementor>
+	<jaxws:inInterceptors>
+			<ref bean="ipInterceptor"/>
+		</jaxws:inInterceptors>
+	</jaxws:endpoint>
+
+
+</beans>   

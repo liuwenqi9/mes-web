@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.WeighMaintenanceMapper">
+	<resultMap id="excelModel" type="com.egdfrm.unit.excelmodel.WeighMaintenanceExcel">
+	        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+	        <result column="status_type" property="status_type" jdbcType="VARCHAR"/>
+	        <result column="segment1" property="segment1" jdbcType="VARCHAR"/> 
+	        <result column="prod_type" property="prod_type" jdbcType="VARCHAR"/> 
+	        <result column="b_quantity" property="b_quantity" jdbcType="NUMERIC"/>
+	        <result column="s_gross_weight" property="s_gross_weight" jdbcType="NUMERIC"/> 
+	        <result column="gross_weight" property="gross_weight" jdbcType="NUMERIC"/> 
+	        <result column="pack_weight" property="pack_weight" jdbcType="NUMERIC"/>
+	        <result column="creation_date" property="creation_date" jdbcType="VARCHAR"/>
+	        <result column="last_update_date" property="last_update_date" jdbcType="VARCHAR"/>      
+	 </resultMap>  
+    <!-- 毛重数量 -->
+     <select id="getCount" resultType="java.lang.Long" parameterType="java.util.Map">
+     	select count(1) from apps.mes_wip_box_gross_weight_v v 
+     		where 1=1
+     	<if test="map.name !=null and map.name !='' ">
+     		and v.WIP_ENTITY_NAME = #{map.name}
+     	</if>
+     	<if test="map.startDate !=null and map.startDate !='' ">
+     		AND v.CREATION_DATE &gt;= #{map.startDate}
+     	</if>
+     	<if test="map.endDate !=null and map.endDate !='' ">
+     		 AND v.CREATION_DATE &lt;= #{map.endDate}
+     	</if>
+     	<if test="map.segment1 !=null and map.segment1 !='' ">
+     		 AND v.segment1 = #{map.segment1}
+     	</if> 
+     </select>
+     <!-- 毛重列表 -->
+      <select id="getWeighMainList" resultMap="excelModel" parameterType="java.util.Map">
+       select WIP_ENTITY_NAME,STATUS_TYPE,SEGMENT1,prod_type,b_quantity,s_gross_weight,GROSS_WEIGHT,pack_weight,CREATION_DATE,last_update_date from ( 
+		     select ROWNUM rnum,v.WIP_ENTITY_NAME,v.STATUS_TYPE,v.SEGMENT1,v.prod_type,v.b_quantity,v.s_gross_weight,v.GROSS_WEIGHT,v.pack_weight,v.CREATION_DATE,v.last_update_date 
+		     from apps.mes_wip_box_gross_weight_v v
+     		where 1=1
+	     	<if test="map.name !=null and map.name !='' ">
+	     		and v.WIP_ENTITY_NAME = #{map.name}
+	     	</if>
+	     	<if test="map.startDate !=null and map.startDate !='' ">
+	     		AND v.CREATION_DATE &gt;= #{map.startDate}
+	     	</if>
+	     	<if test="map.endDate !=null and map.endDate !='' ">
+	     		 AND v.CREATION_DATE &lt;= #{map.endDate}
+	     	</if>
+	     	<if test="map.segment1 !=null and map.segment1 !='' ">
+     		 AND v.segment1 = #{map.segment1}
+     		</if> 
+	     		AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset} 
+     </select>
+     
+     <!-- 工单数量 -->
+	<select id="getWipEntityNameCount" resultType="java.lang.Long" parameterType="java.util.Map">
+     	SELECT count(1)   
+			FROM MES.MES_JOB_BG_WEIGHT MJ,WIP.Wip_Entities  WE
+			     ,apps.MES_CAPACITY_PACKING_V MCP
+			WHERE  MJ.WIP_ENTITY_ID(+) = WE.WIP_ENTITY_ID
+			AND WE.ORGANIZATION_ID = MCP.ORGANIZATION_ID
+			AND WE.PRIMARY_ITEM_ID = MCP.INVENTORY_ITEM_ID 
+     	<if test="map.wip_entity_name !=null and map.wip_entity_name !='' ">
+     		and we.WIP_ENTITY_NAME = #{map.wip_entity_name}
+     	</if> 
+     </select>
+      <!-- 工单列表 -->
+     <select id="getWipEntityNameList" resultType="java.util.Map" parameterType="java.util.Map">
+     SELECT WIP_ENTITY_NAME DATA1,s_gross_weight DATA2,GROSS_WEIGHT DATA3,wip_entity_id DATA4 FROM( 
+	     	SELECT ROWNUM rnum, WE.WIP_ENTITY_NAME ,mcp.s_gross_weight ,MJ.GROSS_WEIGHT,we.wip_entity_id   
+				FROM MES.MES_JOB_BG_WEIGHT MJ,WIP.Wip_Entities  WE
+				     ,apps.MES_CAPACITY_PACKING_V MCP
+				WHERE  MJ.WIP_ENTITY_ID(+) = WE.WIP_ENTITY_ID
+				AND WE.ORGANIZATION_ID = MCP.ORGANIZATION_ID
+				AND WE.PRIMARY_ITEM_ID = MCP.INVENTORY_ITEM_ID 
+	     	<if test="map.wip_entity_name !=null and map.wip_entity_name !='' ">
+	     		and we.WIP_ENTITY_NAME = #{map.wip_entity_name}
+	     	</if> 
+	     	 AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+     </select>
+	
+	<select id="getObjectWipEntityName" resultType="java.util.Map" parameterType="java.util.Map"> 
+	     	SELECT WE.WIP_ENTITY_NAME DATA1,mcp.b_gross_weight DATA2,MJ.GROSS_WEIGHT DATA3,we.wip_entity_id DATA4,mj.pack_weight DATA5  
+				FROM MES.MES_JOB_BG_WEIGHT MJ,WIP.Wip_Entities  WE,apps.MES_CAPACITY_PACKING_V MCP
+				WHERE  MJ.WIP_ENTITY_ID(+) = WE.WIP_ENTITY_ID
+				AND WE.ORGANIZATION_ID = MCP.ORGANIZATION_ID
+				AND WE.PRIMARY_ITEM_ID = MCP.INVENTORY_ITEM_ID 
+	     	<if test="map.wip_entity_name !=null and map.wip_entity_name !='' ">
+	     		and we.WIP_ENTITY_NAME = #{map.wip_entity_name}
+	     	</if>  
+     </select>
+	
+	
+	<!-- 验证是否有数据，有就修改， -->
+   	<select id="getListByWipEntityId" resultType="java.lang.String" parameterType="java.lang.String" >
+   	select mj.wip_entity_id  from MES.MES_JOB_BG_WEIGHT MJ where mj.wip_entity_id = #{wip_entity_id}
+   	</select>
+   	
+   	<insert id="add" parameterType="java.util.Map" > 
+   	insert into mes.mes_job_bg_weight(wip_entity_id,gross_weight,created_by,creation_date,last_updated_by,last_update_date,pack_weight)
+	values(#{map.wip_entity_id},#{map.gross_weight},#{map.uid},sysdate,#{map.uid},sysdate,#{map.pack_weight})
+   	</insert>
+   	
+   	<update id="update" parameterType="java.util.Map" >
+   	update  mes.mes_job_bg_weight 
+   		set gross_weight = #{map.gross_weight}
+   		,last_updated_by = #{map.uid}
+   		,pack_weight = #{map.pack_weight}
+   		,last_update_date = sysdate
+   	 where wip_entity_id =#{map.wip_entity_id} 
+   	</update>
+   	
+   	<!-- 毛重列表 -->
+      <select id="exportExcel" resultMap="excelModel" parameterType="java.util.Map">
+        
+		     select v.WIP_ENTITY_NAME,v.STATUS_TYPE,v.SEGMENT1,
+		     v.prod_type,v.b_quantity,v.s_gross_weight,v.GROSS_WEIGHT,v.CREATION_DATE,v.last_update_date,v.pack_weight 
+		     from apps.mes_wip_box_gross_weight_v v
+     		where 1=1
+	     	<if test="map.name !=null and map.name !='' ">
+	     		and v.WIP_ENTITY_NAME = #{map.name}
+	     	</if>
+	     	<if test="map.startDate !=null and map.startDate !='' ">
+	     		AND v.CREATION_DATE &gt;= #{map.startDate}
+	     	</if>
+	     	<if test="map.endDate !=null and map.endDate !='' ">
+	     		 AND v.CREATION_DATE &lt;= #{map.endDate}
+	     	</if> 
+	     	<if test="map.segment1 !=null and map.segment1 !='' ">
+     		 AND v.segment1 = #{map.segment1}
+     	</if> 
+     </select>	
+</mapper>

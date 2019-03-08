@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.StockInMapper">
+    
+    <resultMap id="StockInPrintRowMap" type="com.egdfrm.unit.model.barcodeManagement.StockInPrintRow">
+        <result column="mo_order" property="mo_order" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+        <result column="plan_line" property="plan_line" jdbcType="VARCHAR"/>
+        <result column="segment2" property="segment2" jdbcType="VARCHAR"/>
+        <result column="customer_type" property="customer_type" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="start_quantity" property="start_quantity" jdbcType="VARCHAR"/>
+        <result column="pack_quantity" property="pack_quantity" jdbcType="VARCHAR"/>
+        <result column="locattion_code" property="locattion_code" jdbcType="VARCHAR"/>
+    </resultMap>
+
+	<resultMap id="exportExcel" type="com.egdfrm.unit.excelmodel.StockInExcel">
+        <result column="plan_line" property="plan_line" jdbcType="VARCHAR"/>
+        <result column="inv_number" property="inv_number" jdbcType="VARCHAR"/>
+        <result column="inspect_number" property="inspect_number" jdbcType="VARCHAR"/>
+        <result column="barcode_text" property="barcode_text" jdbcType="VARCHAR"/>
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR"/>
+        <result column="mo_order" property="mo_order" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="segment2" property="segment2" jdbcType="VARCHAR"/>
+        <result column="subinventory_code" property="subinventory_code" jdbcType="VARCHAR"/> 
+        <result column="locattion_code" property="locattion_code" jdbcType="VARCHAR"/>
+        <result column="pack_quantity" property="pack_quantity" jdbcType="NUMERIC"/> 
+        <result column="status_code" property="status_code" jdbcType="VARCHAR"/> 
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+    </resultMap>
+
+	<!--入库单查询 导出Excel-->
+    <select id="stockInExportExcel" resultMap="exportExcel" parameterType="java.util.Map">
+        SELECT plan_line,inv_number,inspect_number,barcode_text,wip_entity_name,mo_order,segment1,segment2
+        ,subinventory_code,locattion_code,pack_quantity,case status_code when 'WIP_COM' then '未入库' else '已入库' end status_code,description 
+          from apps.mes_packing_headers_inv_query t where 1 = 1
+            <if test="map.productionLine != null and map.productionLine != ''">
+                AND plan_line = #{map.productionLine}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.stockInNumber != null and map.stockInNumber != ''">
+                and inv_number = #{map.stockInNumber}
+            </if>
+            <if test="map.stockMark == 1">
+                and status_code &lt;&gt; 'WIP_COM'
+            </if>
+            <if test="map.stockMark == 0">
+                and status_code = 'WIP_COM'
+            </if>  
+    </select>
+
+    <!--根据包装箱号ID判断是否已生成入库单号-->
+    <select id="isPackingBarCodeByNo" resultType="java.lang.String" parameterType="java.util.Arrays">
+        SELECT apps.mes_barcodes_inspect_pkg.get_inv_flag(#{ids}) FROM dual
+    </select>
+
+    <!--获取入库单-->
+    <select id="generateStorageOrder" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_inspect_pkg.get_inv_number(#{map.number,mode=OUT,jdbcType=VARCHAR}) }
+    </select>
+
+    <!--修改入库单-->
+    <select id="updateDataInv" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_inspect_pkg.inv(#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+        #{map.number,mode=IN,jdbcType=NUMERIC},#{map.p_packing_barcode_id,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+      ) }
+    </select>
+
+    <!--获取打印table数据-->
+    <select id="getTableRows" resultMap="StockInPrintRowMap" parameterType="java.lang.String">
+    select mo_order,
+       wip_entity_name,
+       plan_line,
+       apps.mes_barcodes_pd_pkg.get_prod_type(primary_item_id) segment2,
+       customer_type,
+       segment1,
+       pack_quantity,
+       apps.mes_barcodes_moveorder_pkg.get_inv_locattions(primary_item_id,
+                                                          subinventory_code) locattion_code,
+       start_quantity
+  from (select wdj.attribute1 mo_order,
+               we.wip_entity_name,
+               h.line_code plan_line,
+               cp.custom_model customer_type,
+               ms.segment1,
+               sum(mh.quantity) pack_quantity,
+               wdj.start_quantity,
+               wdj.primary_item_id,
+               nvl(h.subinventory_code, wdj.completion_subinventory) subinventory_code
+          from (select level l,
+                       l.packing_barcode_id,
+                       l.line_barcode_id,
+                       l.wip_entity_id,
+                       l.quantity
+                  from mes.mes_packing_lines l
+                 where l.packing_type &lt;&gt; 'PACK'
+                 start with l.packing_barcode_id in
+                            (select packing_barcode_id
+                               from mes.mes_packing_headers
+                              where inv_number = #{number} )
+                connect by l.packing_barcode_id = prior l.line_barcode_id) mh,
+               wip.wip_entities we,
+               wip.wip_discrete_jobs wdj,
+               apps.mtl_system_items_b ms,
+               apps.cux_item_perporty cp,
+               mes.mes_packing_headers h
+         where wdj.wip_entity_id = we.wip_entity_id
+           and wdj.organization_id = we.organization_id
+           and we.wip_entity_id = mh.wip_entity_id
+           and ms.organization_id = wdj.organization_id
+           and ms.inventory_item_id = wdj.primary_item_id
+           and cp.inventory_item_id(+) = wdj.primary_item_id
+           and h.packing_barcode_id = mh.packing_barcode_id
+           and cp.org_id(+) = 101
+         group by wdj.attribute1,
+                  we.wip_entity_name,
+                  h.line_code,
+                  cp.custom_model,
+                  ms.segment1,
+                  wdj.primary_item_id,
+                  wdj.start_quantity,
+                  nvl(h.subinventory_code, wdj.completion_subinventory)) 
+        
+    </select>
+
+    <!--查询汇总数据-->
+    <select id="getTableHZ" resultType="java.util.Map" parameterType="java.lang.String"> 
+  		select inv_number,subinventory_code,subinventory_desc, count(1) pack_qty from apps.mes_packing_headers_inv_query 
+			where inv_number = #{number}
+  			group by inv_number,subinventory_code,subinventory_desc
+    </select>
+
+    <!--入库单查询 && 入库单打印_数据总数-->
+    <select id="getStockInPrintersByCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from
+        <if test="map.mark == 'search'">
+            apps.mes_packing_headers_inv_query
+        </if>
+        <if test="map.mark == 'printer'">
+            apps.mes_packing_headers_inv_v
+        </if>
+         where 1 = 1
+        <if test="map.productionLine != null and map.productionLine != ''">
+            AND plan_line = #{map.productionLine}
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+            and wip_entity_name = #{map.workOrderNumber}
+        </if>
+        <if test="map.stockInIdentify == 1">
+            and inv_number is not null
+        </if>
+        <if test="map.stockInIdentify == 0">
+            and inv_number is null
+        </if>
+        <if test="map.workOrderNumberSubpool != null and map.workOrderNumberSubpool != ''">
+            and subinventory_code = #{map.workOrderNumberSubpool}
+        </if>
+        <if test="map.stockInNumber != null and map.stockInNumber != ''">
+            and inv_number = #{map.stockInNumber}
+        </if>
+        <if test="map.stockMark == 1">
+            and status_code &lt;&gt; 'WIP_COM'
+        </if>
+        <if test="map.stockMark == 0">
+            and status_code = 'WIP_COM'
+        </if>
+        <if  test="map.checkBeginDate !=null and  map.checkBeginDate !='' ">
+            	and check_date  &gt;=#{map.checkBeginDate}
+         </if>
+         <if  test="map.checkEndDate !=null and  map.checkEndDate !='' ">
+            	and check_date  &lt;=#{map.checkEndDate}
+         </if>
+    </select>
+
+    <!--入库单查询 && 入库单打印_分页查询-->
+    <select id="getStockInPrinters" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT * FROM (
+            select rownum rnum,t.* from
+            <if test="map.mark == 'search'">
+                apps.mes_packing_headers_inv_query
+            </if>
+            <if test="map.mark == 'printer'">
+                apps.mes_packing_headers_inv_v
+            </if>
+            t where 1 = 1
+            <if test="map.productionLine != null and map.productionLine != ''">
+                AND plan_line = #{map.productionLine}
+            </if>
+            <if test="map.workOrderNumber != null and map.workOrderNumber != ''">
+                and wip_entity_name = #{map.workOrderNumber}
+            </if>
+            <if test="map.stockInIdentify == 1">
+                and inv_number is not null
+            </if>
+            <if test="map.stockInIdentify == 0">
+                and inv_number is null
+            </if>
+            <if test="map.workOrderNumberSubpool != null and map.workOrderNumberSubpool != ''">
+                and subinventory_code = #{map.workOrderNumberSubpool}
+            </if>
+            <if test="map.stockInNumber != null and map.stockInNumber != ''">
+                and inv_number = #{map.stockInNumber}
+            </if>
+            <if test="map.stockMark == 1">
+                and status_code &lt;&gt; 'WIP_COM'
+            </if>
+            <if test="map.stockMark == 0">
+                and status_code = 'WIP_COM'
+            </if>
+            <if  test="map.checkBeginDate !=null and  map.checkBeginDate !='' ">
+            	and check_date  &gt;=#{map.checkBeginDate}
+            </if>
+            <if  test="map.checkEndDate !=null and  map.checkEndDate !='' ">
+            	and check_date  &lt;=#{map.checkEndDate}
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY BARCODE_TEXT
+    </select>
+</mapper>

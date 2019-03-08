@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.sale.SalePickingMapper">
+
+    <resultMap id="PickingMap" type="com.egdfrm.unit.model.sale.Picking">
+        <result column="request_number" property="request_number" jdbcType="VARCHAR" />
+        <result column="segment1" property="segment1" jdbcType="VARCHAR" />
+        <result column="primary_quantity" property="primary_quantity" jdbcType="NUMERIC" />
+        <result column="quantity_delivered" property="quantity_delivered" jdbcType="NUMERIC" />
+        <result column="mes_pick_quantity" property="mes_pick_quantity" jdbcType="NUMERIC" />
+        <result column="creation_date" property="creation_date" jdbcType="VARCHAR" /> 
+        <result column="prod_type" property="prod_type" jdbcType="VARCHAR" />
+        <result column="source_header_number" property="source_header_number" jdbcType="VARCHAR" />
+        <result column="customer_name" property="customer_name" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <!--数据总数查询-->
+    <select id="queryPagesCount" resultType="java.lang.Long" parameterType="java.util.Map">
+        select count(1) count from apps.mes_pick_lines_v t
+        WHERE 1 = 1
+        <if test="map.pickingNum != null and map.pickingNum != ''">
+            AND request_number = #{map.pickingNum}
+        </if>
+        <if test="map.startDate != null and map.startDate != ''">
+            AND creation_date &gt;= #{map.startDate}
+        </if>
+        <if test="map.endDate != null and map.endDate != ''">
+            AND creation_date &lt;= #{map.endDate}||' 23:59:59'
+        </if>
+    </select>
+
+    <!--挑库检查分页查询-->
+    <select id="queryPages" resultType="java.util.Map" parameterType="java.util.Map">
+        select * from (
+            select rownum rnum,t.request_number,t.segment1,t.primary_quantity,t.quantity_delivered,t.mes_pick_quantity,t.prod_type,
+            t.source_header_number,t.customer_name,t.creation_date,t.line_number
+            from apps.mes_pick_lines_v t
+            WHERE 1 = 1
+            <if test="map.pickingNum != null and map.pickingNum != ''">
+                AND request_number = #{map.pickingNum}
+            </if>
+            <if test="map.startDate != null and map.startDate != ''">
+                AND creation_date &gt;= #{map.startDate}
+            </if>
+            <if test="map.endDate != null and map.endDate != ''">
+                AND creation_date &lt;= #{map.endDate}||' 23:59:59'
+            </if>
+            AND ROWNUM &lt;= #{page.endset}
+        ) where rnum &gt;= #{page.offset} ORDER BY line_number
+    </select>
+
+
+    <!--挑库检查查询-->
+    <select id="getAll" resultMap="PickingMap" parameterType="java.util.Map">
+        select t.request_number,t.segment1,t.primary_quantity,t.quantity_delivered,t.mes_pick_quantity,t.prod_type,
+        t.source_header_number,t.customer_name,nvl(substr(t.creation_date,0,10),'--') creation_date,t.line_number
+        from apps.mes_pick_lines_v t
+        WHERE 1 = 1
+        <if test="map.pickingNum != null and map.pickingNum != ''">
+            AND request_number = #{map.pickingNum}
+        </if>
+        <if test="map.startDate != null and map.startDate != ''">
+            AND creation_date &gt;= #{map.startDate}
+        </if>
+        <if test="map.endDate != null and map.endDate != ''">
+            AND creation_date &lt;= #{map.endDate}||' 23:59:59'
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.CheckStatisticsMapper">
+
+    <resultMap id="stock" type="com.egdfrm.unit.model.stock.CheckStatisticsExcel">
+        <result column="plan_line_code" property="plan_line_code" jdbcType="VARCHAR" />
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR" />
+        <result column="segment1" property="segment1" jdbcType="VARCHAR" />
+        <result column="segment2" property="segment2" jdbcType="VARCHAR" />
+         <result column="mo_order" property="mo_order" jdbcType="VARCHAR" />
+        <result column="start_quantity" property="start_quantity" jdbcType="NUMERIC" />
+        <result column="transaction_quantity" property="transaction_quantity" jdbcType="NUMERIC" />
+        <result column="status_type" property="status_type" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" />
+        <result column="transaction_date" property="transaction_date" jdbcType="VARCHAR" />  
+    </resultMap>
+
+
+    <!--count-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.CheckStatisticsExcel">
+       select count(1) from apps.mes_wip_check_v where 1=1
+       <if test="model.status_type != null and model.status_type != '' ">
+        	and status_type=#{model.status_type}
+        </if>
+        <if test="model.plan_line_code != null and model.plan_line_code != '' ">
+        	and plan_line_code=#{model.plan_line_code}
+        </if>
+        <if test="model.start_date != null and model.start_date != '' ">
+        	and transaction_date  &gt;=to_date(#{model.start_date}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.end_date != null and model.end_date != '' ">
+        	and transaction_date &lt;= to_date(#{model.end_date}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+    </select>
+
+    <!--分页数据-->
+    <select id="findPage" resultMap="stock" parameterType="com.egdfrm.unit.model.stock.CheckStatisticsExcel">
+      SELECT * from (
+         select ROWNUM rnum,plan_line_code,wip_entity_name,segment1,segment2,mo_order,start_quantity,transaction_quantity,transaction_date,status_type,description 
+         from apps.mes_wip_check_v where 1 = 1
+        <if test="model.status_type != null and model.status_type != '' ">
+        	and status_type=#{model.status_type}
+        </if>
+        <if test="model.plan_line_code != null and model.plan_line_code != '' ">
+        	and plan_line_code=#{model.plan_line_code}
+        </if>
+        <if test="model.start_date != null and model.start_date != '' ">
+        	and transaction_date  &gt;=to_date(#{model.start_date}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.end_date != null and model.end_date != '' ">
+        	and transaction_date &lt;= to_date(#{model.end_date}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+        
+    </select>
+
+
+     
+    <select id="exportExcel" resultMap="stock" parameterType="com.egdfrm.unit.model.stock.StockInStatisticsExcel">
+         select plan_line_code,wip_entity_name,segment1,segment2,mo_order,start_quantity,transaction_quantity,transaction_date,status_type,description 
+         from apps.mes_wip_check_v where 1 = 1
+        <if test="model.status_type != null and model.status_type != '' ">
+        	and status_type=#{model.status_type}
+        </if>
+        <if test="model.plan_line_code != null and model.plan_line_code != '' ">
+        	and plan_line_code=#{model.plan_line_code}
+        </if>
+        <if test="model.start_date != null and model.start_date != '' ">
+        	and transaction_date  &gt;=to_date(#{model.start_date}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if> 
+        <if test="model.end_date != null and model.end_date != '' ">
+        	and transaction_date &lt;= to_date(#{model.end_date}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        
+    </select>
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.InventoryMapper" >
+ 
+  <!-- PDA子库存转移-据包装条码Id获取物料编码和描述 -->
+  <select id="getItemidByPackBarcodeId" parameterType="java.math.BigDecimal" resultType="com.egdfrm.unit.model.expand.pda.StorageTransfer">
+	SELECT MSIB.SEGMENT1 LOTNO, MSIB.DESCRIPTION DESR
+	  FROM MES.MES_PACKING_HEADERS PH
+	  LEFT JOIN APPS.MTL_SYSTEM_ITEMS_B MSIB
+	    ON PH.ORGANIZATION_ID = MSIB.ORGANIZATION_ID
+	   AND PH.INVENTORY_ITEM_ID = MSIB.INVENTORY_ITEM_ID
+	 WHERE PH.PACKING_BARCODE_ID = #{packBarcodeId,jdbcType=DECIMAL}
+  </select>
+  <!-- 根据包产品物料ID获取关联的产品物料编码和描述 -->
+  <select id="getProductItemAndDesc" parameterMap="getProductItemAndDescMap" resultType="com.egdfrm.unit.model.expand.pda.StorageTransfer">
+	SELECT B.SEGMENT1 LOTNO,B.DESCRIPTION DESR
+	  FROM APPS.MTL_SYSTEM_ITEMS_B  B,
+	       APPS.MTL_ITEM_CATEGORIES MIC,
+	        APPS.MTL_CATEGORIES_V    MC
+	 WHERE 1 = 1
+	   AND MIC.INVENTORY_ITEM_ID = B.INVENTORY_ITEM_ID
+	   AND MIC.ORGANIZATION_ID = B.ORGANIZATION_ID
+	   AND B.ORGANIZATION_ID = #{orgId, jdbcType = DECIMAL}
+	   AND MIC.CATEGORY_ID = MC.CATEGORY_ID
+	   AND MIC.CATEGORY_SET_ID = 5
+	   AND B.INVENTORY_ITEM_ID = #{invId, jdbcType = DECIMAL}
+  </select>
+   <parameterMap type="Map" id="getProductItemAndDescMap">
+		<parameter property="orgId" />
+		<parameter property="invId" />
+		<parameter property="dbreturn.xStatus" />
+		<parameter property="dbreturn.xMessage" />
+	</parameterMap>
+	<parameterMap type="Map" id="checkIsProductLocationCanTransferMap">
+		<parameter property="orgId" />
+		<parameter property="invId" />
+		<parameter property="dbreturn.xStatus" />
+		<parameter property="dbreturn.xMessage" />
+	</parameterMap>
+	<parameterMap type="Map" id="invMap">
+		<parameter property="userId" />
+		<parameter property="processId" />
+		<parameter property="packingBarcodeId" />
+		<parameter property="oldLocation" />
+		<parameter property="newLocation" />
+		<parameter property="dbreturn.xStatus" />
+		<parameter property="dbreturn.xMessage" />
+	</parameterMap>
+  <!--验证产品是否可以转移货位（放在包装箱内的不行，）-->
+  <select id="callCheckIsProductLocationCanTransfer" parameterMap="checkIsProductLocationCanTransferMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_transfer_pkg.pda_check( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA子库存转移-提交-写入MES临时接口表-->
+  <select id="callTranInsertTransactionTemp" parameterMap="invMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_transfer_pkg.tran_insert_transaction_temp( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{oldLocation,mode=IN,jdbcType=VARCHAR},
+	  #{newLocation,mode=IN,jdbcType=VARCHAR}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA子库存转移-提交-子库存/货位转移-->
+  <select id="callMesBarcodesTransfer" parameterMap="invMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_transfer_pkg.mes_barcodes_transfer( 
+	  #{processId,mode=IN,jdbcType=DECIMAL}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+ 
+</mapper>

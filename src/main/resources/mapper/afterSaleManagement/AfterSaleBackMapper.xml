@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.afterSaleMenagement.AfterSaleBackMapper">
+
+
+	<select id="getCustomerInfoCount" resultType="java.lang.Long" parameterType="java.lang.String"> 
+		 	  
+			  SELECT  count(1) total FROM APPS.CUX_CUSTOMER_DETAIL CCD
+				      WHERE CCD.primary_flag = 'Y'
+				        AND CCD.SITE_USE_CODE = 'SHIP_TO'
+				        <if test="customer!=null and customer!=''">
+				        	AND CCD.CUSTOMER_NAME like '%'||#{customer}||'%'
+				        </if> 	  
+	</select>
+
+	<!-- 根据客户名  取客户名、联系人、联系电话、收货地址-->
+	<select id="getCustomerInfoList" resultType="java.util.Map" parameterType="java.lang.String"> 
+		SELECT * FROM (		  
+			  SELECT ROWNUM rnum, CCD.CUSTOMER_NAME  CUSTOMER_NAME <!-- 客户名 -->
+				     ,CCD.LAST_NAME CONTACT_NAME <!-- 联系人 -->
+				     ,CCD.MOBILE PHONE <!-- 、联系电话 -->
+				     ,CCD.ADDRESS1  ADDRESS <!-- 收货地址 -->
+				       FROM APPS.CUX_CUSTOMER_DETAIL CCD
+				      WHERE CCD.primary_flag = 'Y'
+				        AND CCD.SITE_USE_CODE = 'SHIP_TO'
+				        <if test="customer!=null and customer!=''">
+				        	AND CCD.CUSTOMER_NAME like '%'||#{customer}||'%'
+				        </if> 	 
+		AND ROWNUM &lt;= #{page.endset} 
+	        ) WHERE rnum &gt;= #{page.offset}
+	</select>
+
+
+	<!-- 验证 条码是否存在   -->
+	 <select id="isValid" resultType="java.lang.String" parameterType="java.lang.String">
+       select wb.barcode_text from mes.mes_wip_barcodes wb where wb.barcode_text = #{barcodeText} and wb.status_code='SHIP'
+    </select>
+
+	<!-- and ms.inventory_item_status_code &lt;&gt;'Inactive'  -->
+	<select id="getBarcodeInfoByBarcodeText" resultType="java.util.Map" parameterType="java.lang.String"> 
+		select wb.wip_barcode_id,ms.inventory_item_id MATERIAL_ID,ms.segment1,
+	        apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) MODEL,
+	        ms.description,wb.barcode_text PRODUCT_BARCODE
+	        from apps.mtl_system_items_b ms,mes.mes_wip_barcodes wb 
+	        where wb.primary_item_id(+) = ms.inventory_item_id
+	        and substr(ms.segment1, 1, 2) in ('18', '19')
+	        
+	        and ms.organization_id = 101 
+	        and wb.barcode_text = #{barcodeText}
+	</select>
+	
+	<!-- inmap -->
+	 <parameterMap type="Map" id="inMap">
+	    <parameter property="repWorkOrder"  /> 
+	 </parameterMap>
+	<!-- 生成维修单号 -->
+	<select id="callGetRepWorkOrder" parameterMap="inMap" statementType="CALLABLE">
+		{call apps.mes_after_sale_pkg.get_rep_work_order(
+			#{repWorkOrder,mode=OUT,jdbcType=VARCHAR}
+			)}
+			
+	</select>
+	
+	<!-- 根据id 修改维修单 -->
+	<update id="updateByRepWorkOrder" parameterType="java.lang.String">
+		UPDATE MES.MES_AFTER_SALE SET REP_WORK_ORDER=#{repWorkOrder},MAINTAIN_BY=#{uid},MAINTAIN_DATE=SYSDATE,GENERATER_DATE=SYSDATE,GENERATER_BY=#{uid}
+			WHERE ID=#{ID}
+	</update>
+	
+	<!-- 获取打印信息 -->
+	<select id="getPrinterInfo" parameterType="java.lang.String" resultMap="afterSaleBack">
+		 select nvl(ma.custom_name,ma.other_custom_name ) custom_name,ma.phone,ma.contact_name,ma.address,ma.rep_work_order, 
+         Rownum ID,ma.model,ma.segment1,ma.product_barcode,'1' return_qty ,ma.issue_description,ma.rep_reason,ma.rep_people,ma.rep_type,ma.so_no,ma.CUSTOMER_FEEDBACK
+         ,to_char(ma.RETURN_OPERATION_TIME,'yyyy-mm-dd') RETURN_OPERATION_TIME
+         from mes.mes_after_sale ma where ma.rep_work_order= #{repWorkOrder}
+	</select>
+	
+	<!-- 按行 IDS 获取打印信息 -->
+	<select id="getPrinterInfoByIds" parameterType="java.lang.Integer" resultMap="afterSaleBack">
+		 select nvl(ma.custom_name,ma.other_custom_name ) custom_name,ma.phone,ma.contact_name,ma.address,ma.rep_work_order, 
+         Rownum ID,ma.model,ma.segment1,ma.product_barcode,'1' return_qty ,ma.issue_description,ma.rep_reason,ma.rep_people,ma.rep_type,ma.so_no,ma.CUSTOMER_FEEDBACK
+         ,to_char(ma.RETURN_OPERATION_TIME,'yyyy-mm-dd') RETURN_OPERATION_TIME
+         from mes.mes_after_sale ma where ma.id in  
+		<foreach item="item" index="index" collection="IDS" open="(" separator="," close=")">
+                 #{item,jdbcType=NUMERIC}
+		</foreach> 
+	</select>
+	<update id="updatePrinterStatusByIds" parameterType="java.lang.Integer">
+		update mes.mes_after_sale ma set ma.printer_status='Y',ma.printer_date=SYSDATE where id in
+		<foreach item="item" index="index" collection="IDS" open="(" separator="," close=")">
+                 #{item,jdbcType=NUMERIC}
+		</foreach> 
+	</update>
+	
+	
+	<!-- 根据id 取 维修单号，维修人员，补号SO，处理类型，维修分析，故障描述  -->
+	<select id="getLineInfoById" resultType="java.util.Map" parameterType="java.lang.String">
+		select REP_WORK_ORDER ,
+            	SO_NO ,
+            	REP_PEOPLE,
+            	REP_TYPE,
+            	REP_REASON ,
+            	ISSUE_DESCRIPTION,
+            	REP_WORK_ORDER,
+            	CUSTOMER_FEEDBACK 
+            	from MES.MES_AFTER_SALE where ID=#{ID} 
+		
+	</select>
+	<!-- 获取更新行信息  -->
+	<select id="getUpdateLineInfoById" resultType="java.util.Map" parameterType="java.lang.String">
+			  select  RE_LOGI_COM ,
+		              RE_EXP_NO ,
+		              RETURN_QTY,
+		              ADDRESS,
+		              CUSTOM_NAME,
+		              CONTACT_NAME,
+		              PHONE,
+		              OTHER_CUSTOM_NAME,
+	                  OUTER_CONTACT,
+	                  INTER_NOTE,
+	                  REMAKR,
+	                  PRODUCT_BARCODE 
+		            	from MES.MES_AFTER_SALE where ID=#{ID} 
+		
+	</select>
+	
+	<!--
+	这个两个是添加ERP维修人员时用到的，故在这里做备注，方便查找ERP
+	{ CUX_MES_repair_people ，集值CUX_MES_repair_people }
+	  SELECT FFV.FLEX_VALUE,FFV.DESCRIPTION REP_PEOPLE
+			   FROM APPS.FND_FLEX_VALUES_VL FFV
+			  WHERE FFV.FLEX_VALUE_SET_ID = 1011924
+			    AND FFV.ENABLED_FLAG = 'Y'
+			    AND FFV.END_DATE_ACTIVE IS NULL
+			    ORDER BY 1
+			    @hgb 2018-03-29 切换 取mes_after_sale_people中
+	-->
+	<select id="getRepPeopleAll" resultType="java.util.Map" parameterType="java.lang.String"> 
+		     select mp.id,
+			   mp.flex_value,
+			   mp.rep_people,
+			   mp.active_date,
+			   mp.create_by,
+			   mp.create_date,
+			   mp.update_by,
+			   mp.update_date from  mes.mes_after_sale_people mp
+			   where  1=1 and  nvl(mp.active_date,sysdate+1) >sysdate order by mp.flex_value asc
+	</select>
+	
+        
+   <insert id="saveMoel"  parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+	INSERT INTO MES.MES_AFTER_SALE(	BARCODEID ,
+			    	            	MATERIAL_ID ,
+			    	            	PRODUCT_BARCODE,
+			    	            	SEGMENT1,
+			    	            	MODEL,
+			    	            	DESCRIPTION,
+			    	            	CUSTOM_NAME,
+			    	            	RE_LOGI_COM,
+			    	            	RE_EXP_NO ,
+			    	            	RETURN_QTY ,
+			    	            	CONTACT_NAME ,
+			    	            	PHONE,
+			    	            	ADDRESS,
+			    	            	RETURN_OPERATION_TIME,
+			    	            	RETURN_OPERATOR,
+          							STATUS,
+          							OTHER_CUSTOM_NAME,
+          							OUTER_CONTACT,
+    	            				INTER_NOTE,
+    	            	            REMAKR,RE_CREATE_DATE
+   									)
+   									VALUES(
+   									#{model.BARCODEID,jdbcType=NUMERIC},
+   									#{model.MATERIAL_ID},
+   									#{model.PRODUCT_BARCODE},
+   									#{model.SEGMENT1},
+   									#{model.MODEL},
+   									#{model.DESCRIPTION},
+   									#{model.CUSTOM_NAME},
+   									#{model.RE_LOGI_COM},
+   									#{model.RE_EXP_NO},
+   									#{model.RETURN_QTY},
+   									#{model.CONTACT_NAME},
+   									#{model.PHONE},
+   									#{model.ADDRESS},
+   									to_date(#{model.DELIVERY_OPERATION_TIME}||' '||to_char(sysdate,'hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') ,
+   									#{uid,jdbcType=VARCHAR},
+   									'return',
+   									#{model.OTHER_CUSTOM_NAME},
+   									#{model.OUTER_CONTACT},
+   									#{model.INTER_NOTE},
+   									#{model.REMAKR} ,SYSDATE
+   									)
+   
+   </insert>
+   
+   <select id="getAfterSaleSummaryCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+   	SELECT COUNT(1) COUNT FROM (
+              SELECT MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  MA.STATUS,MA.RETURN_OPERATOR,MA.RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,MA.DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,NVL(MA.CUSTOM_NAME,MA.OTHER_CUSTOM_NAME) CUSTOM_NAME ,MA.REP_WORK_ORDER ,MA.CUSTOMER_FEEDBACK,
+                  MA.PRINTER_STATUS  
+                    FROM MES.MES_AFTER_SALE MA )
+                    MA WHERE 1=1
+               <!-- 退货物流单号 -->      
+             <if test="model.RE_EXP_NO != null and model.RE_EXP_NO != ''">
+            		AND MA.RE_EXP_NO = #{model.RE_EXP_NO}
+           	 </if>      
+             <!-- 联系电话 -->      
+             <if test="model.PHONE!= null and model.PHONE != ''">
+            		AND MA.PHONE = #{model.PHONE}
+           	 </if> 
+                    
+   			 <if test="model.REP_WORK_ORDER != null and model.REP_WORK_ORDER != ''">
+            		AND MA.REP_WORK_ORDER = #{model.REP_WORK_ORDER}
+            </if>
+            <if test="model.CUSTOM_NAME != null and model.CUSTOM_NAME != ''">
+            		AND MA.CUSTOM_NAME like '%'|| #{model.CUSTOM_NAME}||'%'
+            </if>
+			 <if test="model.PRODUCT_BARCODE != null and model.PRODUCT_BARCODE != ''">
+            		AND MA.PRODUCT_BARCODE = #{model.PRODUCT_BARCODE}
+            </if>
+            <if test="model.RETURN_OPERATION_TIME_START != null and model.RETURN_OPERATION_TIME_START != ''">
+            AND to_date(to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{model.RETURN_OPERATION_TIME_START}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+	        </if>
+	        <if test="model.RETURN_OPERATION_TIME_END != null and model.RETURN_OPERATION_TIME_END != ''">
+	            AND to_date(to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{model.RETURN_OPERATION_TIME_END}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+	        </if> 
+	        <if test="model.STATUS != null and model.STATUS != ''">
+	        	<if test="model.falg == 1 "><!-- 已完成 -->
+            		AND (MA.SO_NO IS NOT NULL OR MA.DELIVERY_OPERATION_TIME IS NOT NULL)
+            	</if>	
+            	<if test="model.falg == 0 "><!-- 未完成 -->
+            		AND MA.SO_NO IS NULL AND MA.DELIVERY_OPERATION_TIME IS NULL
+            	</if>
+            </if>  
+            <if test="model.PRINTER_STATUS != null and model.PRINTER_STATUS != ''">
+            	<if test="model.PRINTER_STATUS == 'Y'.toString() ">
+	        	  AND MA.PRINTER_STATUS=#{model.PRINTER_STATUS}
+	        	  </if>
+	        	  <if test="model.PRINTER_STATUS == 'N'.toString() ">
+	        	  	AND ( MA.PRINTER_STATUS=#{model.PRINTER_STATUS} or  MA.PRINTER_STATUS is null)
+	        	  </if>
+            </if>
+   </select>
+   
+   <select id="getAfterSaleSummaryList" resultMap="afterSaleBack" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+    SELECT * FROM (	
+    	SELECT ROWNUM rnum,MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  MA.STATUS,MA.RETURN_OPERATOR,to_char(MA.RETURN_OPERATION_TIME, 'yyyy-mm-dd') RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,to_char(MA.DELIVERY_OPERATION_TIME, 'yyyy-mm-dd')  DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,MA.CUSTOM_NAME,MA.REP_WORK_ORDER ,MA.CUSTOMER_FEEDBACK,MA.PRINTER_STATUS FROM (
+              SELECT MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  MA.STATUS,MA.RETURN_OPERATOR,MA.RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,MA.DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,NVL(MA.CUSTOM_NAME,MA.OTHER_CUSTOM_NAME) CUSTOM_NAME ,MA.REP_WORK_ORDER ,MA.CUSTOMER_FEEDBACK,
+                  MA.PRINTER_STATUS  
+                    FROM MES.MES_AFTER_SALE MA order by ma.RETURN_OPERATION_TIME DESC )
+                    MA WHERE 1 = 1
+              <!-- 退货物流单号 -->      
+             <if test="model.RE_EXP_NO != null and model.RE_EXP_NO != ''">
+            		AND MA.RE_EXP_NO = #{model.RE_EXP_NO}
+            </if>
+             <!-- 联系电话 -->      
+             <if test="model.PHONE!= null and model.PHONE != ''">
+            		AND MA.PHONE = #{model.PHONE}
+           	 </if>       
+            <if test="model.REP_WORK_ORDER != null and model.REP_WORK_ORDER != ''">
+            		AND MA.REP_WORK_ORDER = #{model.REP_WORK_ORDER}
+            </if>
+            <if test="model.CUSTOM_NAME != null and model.CUSTOM_NAME != ''">
+            		AND MA.CUSTOM_NAME like '%'|| #{model.CUSTOM_NAME}||'%'
+            </if>
+			 <if test="model.PRODUCT_BARCODE != null and model.PRODUCT_BARCODE != ''">
+            		AND MA.PRODUCT_BARCODE = #{model.PRODUCT_BARCODE}
+            </if>
+            <if test="model.RETURN_OPERATION_TIME_START != null and model.RETURN_OPERATION_TIME_START != ''">
+            AND to_date(to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{model.RETURN_OPERATION_TIME_START}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+	        </if>
+	        <if test="model.RETURN_OPERATION_TIME_END != null and model.RETURN_OPERATION_TIME_END != ''">
+	            AND to_date(to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{model.RETURN_OPERATION_TIME_END}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+	        </if> 
+	        <if test="model.STATUS != null and model.STATUS != ''">
+	        	<if test="model.falg == 1 "><!-- 已完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NOT NULL
+            	</if>	
+            	<if test="model.falg == 0 "><!-- 未完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NULL
+            	</if>
+            </if>
+             <if test="model.PRINTER_STATUS != null and model.PRINTER_STATUS != ''">
+            	<if test="model.PRINTER_STATUS == 'Y'.toString() ">
+	        	  AND MA.PRINTER_STATUS=#{model.PRINTER_STATUS}
+	        	  </if>
+	        	  <if test="model.PRINTER_STATUS == 'N'.toString()">
+	        	  	AND ( MA.PRINTER_STATUS=#{model.PRINTER_STATUS} or  MA.PRINTER_STATUS is null)
+	        	  </if>
+            </if>
+             
+   			 AND ROWNUM &lt;= #{page.endset} 
+        ) WHERE rnum &gt;= #{page.offset}
+   </select>
+
+	<!-- 售后维修记录（导出excel） -->
+	<select id="exportExcel" resultMap="afterSaleExcel" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack" >
+		select ma.rep_work_order, 
+	       ma.model,
+	       ma.segment1,
+	       ma.product_barcode,
+	       nvl(ma.custom_name, ma.other_custom_name) custom_name,
+	       ma.re_exp_no,
+	       ma.re_logi_com,
+	       ma.return_qty,
+	       to_char(ma.return_operation_time, 'yyyy-mm-dd') return_operation_time,
+	       ma.contact_name,
+	       ma.phone,
+	       ma.address,
+	       ma.customer_feedback,
+	       ma.issue_description,
+	       ma.rep_reason,
+	       ma.rep_people,
+	       ma.rep_type,
+	       ma.so_no,
+	       to_char(ma.delivery_operation_time, 'yyyy-mm-dd') delivery_operation_time,
+	       ma.printer_status,
+	       ma.description 
+	  from mes.mes_after_sale ma where 1=1
+			<!-- 退货物流单号 -->      
+             <if test="model.RE_EXP_NO != null and model.RE_EXP_NO != ''">
+            		AND ma.RE_EXP_NO = #{model.RE_EXP_NO}
+            </if>
+             <!-- 联系电话 -->      
+             <if test="model.PHONE!= null and model.PHONE != ''">
+            		AND ma.PHONE = #{model.PHONE}
+           	 </if>       
+            <if test="model.REP_WORK_ORDER != null and model.REP_WORK_ORDER != ''">
+            		AND ma.REP_WORK_ORDER = #{model.REP_WORK_ORDER}
+            </if>
+            <if test="model.CUSTOM_NAME != null and model.CUSTOM_NAME != ''">
+            		AND ma.CUSTOM_NAME like '%'|| #{model.CUSTOM_NAME}||'%'
+            </if>
+			 <if test="model.PRODUCT_BARCODE != null and model.PRODUCT_BARCODE != ''">
+            		AND ma.PRODUCT_BARCODE = #{model.PRODUCT_BARCODE}
+            </if>
+            <if test="model.RETURN_OPERATION_TIME_START != null and model.RETURN_OPERATION_TIME_START != ''">
+            AND to_date(to_char(ma.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &gt;= to_date(#{model.RETURN_OPERATION_TIME_START}||' 00:00:00 ','yyyy-mm-dd hh24:mi:ss')
+	        </if>
+	        <if test="model.RETURN_OPERATION_TIME_END != null and model.RETURN_OPERATION_TIME_END != ''">
+	            AND to_date(to_char(ma.RETURN_OPERATION_TIME,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') &lt;= to_date(#{model.RETURN_OPERATION_TIME_END}||' 23:59:59 ','yyyy-mm-dd hh24:mi:ss')
+	        </if> 
+	        <if test="model.STATUS != null and model.STATUS != ''">
+	        	<if test="model.falg == 1 "><!-- 已完成 -->
+            		AND  ma.DELIVERY_OPERATION_TIME IS NOT NULL
+            	</if>	
+            	<if test="model.falg == 0 "><!-- 未完成 -->
+            		AND  ma.DELIVERY_OPERATION_TIME IS NULL
+            	</if>
+            </if>
+             <if test="model.PRINTER_STATUS != null and model.PRINTER_STATUS != ''">
+            	<if test="model.PRINTER_STATUS == 'Y'.toString() ">
+	        	  AND ma.PRINTER_STATUS=#{model.PRINTER_STATUS}
+	        	  </if>
+	        	  <if test="model.PRINTER_STATUS == 'N'.toString()">
+	        	  	AND ( ma.PRINTER_STATUS=#{model.PRINTER_STATUS} or  ma.PRINTER_STATUS is null)
+	        	  </if>
+            </if>
+	</select>
+
+
+	<!-- 更新 -->
+	<update id="update" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+		UPDATE MES_AFTER_SALE SET SO_NO=#{model.SO_NO},REP_PEOPLE=#{model.REP_PEOPLE},REP_TYPE=#{model.REP_TYPE},REP_REASON=#{model.REP_REASON},ISSUE_DESCRIPTION=#{model.ISSUE_DESCRIPTION},CUSTOMER_FEEDBACK=#{model.CUSTOMER_FEEDBACK},
+		MAINTAIN_BY=#{uid},MAINTAIN_DATE=SYSDATE
+		WHERE ID=#{model.ID}  
+	</update>
+	
+	<!-- 更新 一条-->
+	<update id="updateById" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+		UPDATE MES_AFTER_SALE SET RE_LOGI_COM=#{model.RE_LOGI_COM,jdbcType=VARCHAR},RE_EXP_NO=#{model.RE_EXP_NO,jdbcType=VARCHAR},RETURN_QTY=#{model.RETURN_QTY,jdbcType=NUMERIC},ADDRESS=#{model.ADDRESS,jdbcType=VARCHAR},CUSTOM_NAME=#{model.CUSTOM_NAME,jdbcType=VARCHAR},CONTACT_NAME=#{model.CONTACT_NAME,jdbcType=VARCHAR},PHONE=#{model.PHONE,jdbcType=VARCHAR},
+		OTHER_CUSTOM_NAME=#{model.OTHER_CUSTOM_NAME,jdbcType=VARCHAR},OUTER_CONTACT=#{model.OUTER_CONTACT,jdbcType=VARCHAR},INTER_NOTE=#{model.INTER_NOTE,jdbcType=VARCHAR},REMAKR=#{model.REMAKR,jdbcType=VARCHAR},PRODUCT_BARCODE=#{model.PRODUCT_BARCODE,jdbcType=VARCHAR},
+		MAINTAIN_BY=#{uid},MAINTAIN_DATE=SYSDATE
+		WHERE ID=#{model.ID}  
+	</update>
+	
+	<!-- 批量更新 交仓库日期 -->
+	<update id="updateHandOverByIds" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+		UPDATE MES_AFTER_SALE SET hand_over_date=to_date(#{model.HAND_OVER_DATE,jdbcType=VARCHAR},'yyyy-MM-dd'),
+		hand_over_BY=#{uid},hand_over_by_date=SYSDATE
+		<!-- WHERE ID in (#{model.IDs,jdbcType=VARCHAR}) -->
+		WHERE ID IN 
+		<foreach item="item" index="index" collection="model.arrayId" open="(" separator="," close=")">
+                 #{item,jdbcType=NUMERIC}
+		</foreach> 
+		<!-- NUMERIC -->
+	</update>
+
+	<!-- 在售后表中， 验证 条码是否存在   -->
+	 <select id="isValidToShip" resultType="java.lang.String" parameterType="java.lang.String">
+       SELECT MA.PRODUCT_BARCODE FROM MES.MES_AFTER_SALE MA WHERE MA.PRODUCT_BARCODE=#{PRODUCT_BARCODE} AND MA.REP_WORK_ORDER=#{REP_WORK_ORDER}
+    </select>
+	<!-- 在售后表中，取条码相关信息 -->
+	<select id="getBarcodeInfoByBarcodeTextOrrEpWorkOrder" resultType="java.util.Map" parameterType="java.lang.String"> 
+		SELECT MA.PRODUCT_BARCODE,MA.SEGMENT1,MA.MODEL,MA.DESCRIPTION FROM MES.MES_AFTER_SALE MA
+			WHERE 1=1 AND MA.REP_WORK_ORDER=#{REP_WORK_ORDER} AND MA.PRODUCT_BARCODE=#{PRODUCT_BARCODE}
+	</select>
+	
+	<!--售后 出货保存 -->
+	<update id="upateToSave" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+		UPDATE MES_AFTER_SALE SET SHIP_QTY='1',SH_LOGI_COM=#{model.SH_LOGI_COM},SH_EXP_NO=#{model.SH_EXP_NO},CONTACT_NAME=#{model.CONTACT_NAME},PHONE=#{model.PHONE},ADDRESS=#{model.ADDRESS},SUPPLIER_DELIVERY_INFO=#{model.SUPPLIER_DELIVERY_INFO}
+		,DELIVERY_OPERATOR=#{uid}
+		WHERE ID=#{model.ID}  
+	</update>
+	<!-- 售后 出货SHIP-->
+	<update id="upateToShip" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+		UPDATE MES_AFTER_SALE SET SHIP_QTY='1',SH_LOGI_COM=#{model.SH_LOGI_COM},SH_EXP_NO=#{model.SH_EXP_NO},CONTACT_NAME=#{model.CONTACT_NAME},PHONE=#{model.PHONE},ADDRESS=#{model.ADDRESS},SUPPLIER_DELIVERY_INFO=#{model.SUPPLIER_DELIVERY_INFO}
+		,STATUS='delivery',DELIVERY_OPERATOR=#{uid},DELIVERY_OPERATION_TIME=SYSDATE
+		WHERE ID=#{model.ID}  
+	</update>
+	<!-- 售后出货 总记录  -->
+	<select id="getAfterSaleOutCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+   	SELECT COUNT(1) COUNT FROM (
+   			SELECT MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  CASE MA.STATUS WHEN 'return' THEN '未出货' WHEN 'delivery' THEN '已出货' END STATUS,MA.RETURN_OPERATOR,to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd') RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,to_char(MA.DELIVERY_OPERATION_TIME,'yyyy-mm-dd') DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,NVL(MA.CUSTOM_NAME,MA.OTHER_CUSTOM_NAME) CUSTOM_NAME,MA.REP_WORK_ORDER ,MA.SH_EXP_NO,MA.SUPPLIER_DELIVERY_INFO  
+                     FROM MES.MES_AFTER_SALE MA  order by MA.DELIVERY_OPERATION_TIME,MA.REP_WORK_ORDER  DESC ) MA WHERE 1=1
+   			 <if test="model.REP_WORK_ORDER != null and model.REP_WORK_ORDER != ''">
+            		AND MA.REP_WORK_ORDER = #{model.REP_WORK_ORDER}
+            </if>
+            <if test="model.CUSTOM_NAME != null and model.CUSTOM_NAME != ''">
+            		AND MA.CUSTOM_NAME LIKE '%'|| #{model.CUSTOM_NAME}||'%'
+            </if>
+			 <if test="model.PRODUCT_BARCODE != null and model.PRODUCT_BARCODE != ''">
+            		AND MA.PRODUCT_BARCODE = #{model.PRODUCT_BARCODE}
+            </if> 
+            <!-- 型号 -->
+             <if test="model.MODEL != null and model.MODEL != ''">
+            		AND MA.MODEL = #{model.MODEL}
+            </if> 
+            <!-- 联系人 -->
+             <if test="model.CONTACT_NAME != null and model.CONTACT_NAME != ''">
+            		AND MA.CONTACT_NAME = #{model.CONTACT_NAME}
+            </if> 
+	        <if test="model.STATUS != null and model.STATUS != ''">
+	        	<if test="model.falg == 1 "><!-- 已完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NOT NULL
+            	</if>	
+            	<if test="model.falg == 0 "><!-- 未完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NULL
+            	</if>
+            </if>  
+   </select>
+   <!-- 售后出货 分页列表 -->
+   <select id="getAfterSaleOutList" resultMap="afterSaleBack" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+    SELECT * FROM (	
+    	SELECT ROWNUM rnum,MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  MA.STATUS,MA.RETURN_OPERATOR,RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,MA.CUSTOM_NAME,MA.REP_WORK_ORDER ,MA.SH_EXP_NO,MA.SUPPLIER_DELIVERY_INFO FROM (
+             SELECT MA.ID,MA.PRODUCT_BARCODE,MA.MATERIAL_ID,MA.DESCRIPTION, MA.PRODUCTION_TIMES,MA.ORDER_DELIVERY_TIMES,
+                  CASE MA.STATUS WHEN 'return' THEN '未出货' WHEN 'delivery' THEN '已出货' END STATUS,MA.RETURN_OPERATOR,to_char(MA.RETURN_OPERATION_TIME,'yyyy-mm-dd') RETURN_OPERATION_TIME,MA.DELIVERY_OPERATOR,to_char(MA.DELIVERY_OPERATION_TIME,'yyyy-mm-dd') DELIVERY_OPERATION_TIME,MA.EXPRESS_NO,
+                  MA.PRODUCT_CATEGORY,MA.BARCODEID,MA.WORKORDER,MA.SEGMENT1,MA.ADDRESS,MA.PHONE,MA.CONTACT_NAME,MA.MODEL,MA.RETURN_QTY,
+                  MA.RE_LOGI_COM,MA.SH_LOGI_COM,MA.RE_EXP_NO,MA.SHIP_QTY,MA.SO_NO,MA.REP_PEOPLE,MA.REP_REASON,MA.REP_TYPE,
+                  MA.ISSUE_DESCRIPTION,NVL(MA.CUSTOM_NAME,MA.OTHER_CUSTOM_NAME) CUSTOM_NAME,MA.REP_WORK_ORDER ,MA.SH_EXP_NO,MA.SUPPLIER_DELIVERY_INFO  
+                     FROM MES.MES_AFTER_SALE MA  order by MA.DELIVERY_OPERATION_TIME,MA.REP_WORK_ORDER  DESC ) MA
+                WHERE 1 = 1
+            <if test="model.REP_WORK_ORDER != null and model.REP_WORK_ORDER != ''">
+            		AND MA.REP_WORK_ORDER = #{model.REP_WORK_ORDER}
+            </if>
+            <if test="model.CUSTOM_NAME != null and model.CUSTOM_NAME != ''">
+            		AND MA.CUSTOM_NAME LIKE '%'|| #{model.CUSTOM_NAME}||'%'
+            </if>
+			 <if test="model.PRODUCT_BARCODE != null and model.PRODUCT_BARCODE != ''">
+            		AND MA.PRODUCT_BARCODE = #{model.PRODUCT_BARCODE}
+            </if> 
+            <!-- 型号 -->
+             <if test="model.MODEL != null and model.MODEL != ''">
+            		AND MA.MODEL = #{model.MODEL}
+            </if> 
+            <!-- 联系人 -->
+             <if test="model.CONTACT_NAME != null and model.CONTACT_NAME != ''">
+            		AND MA.CONTACT_NAME = #{model.CONTACT_NAME}
+            </if> 
+	        <if test="model.STATUS != null and model.STATUS != ''">
+	        	<if test="model.falg == 1 "><!-- 已完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NOT NULL
+            	</if>	
+            	<if test="model.falg == 0 "><!-- 未完成 -->
+            		AND  MA.DELIVERY_OPERATION_TIME IS NULL
+            	</if>
+            </if> 
+   			 AND ROWNUM &lt;= #{page.endset} 
+        ) WHERE rnum &gt;= #{page.offset}
+   </select>
+
+	<!--  NUMERIC VARCHAR -->
+    <resultMap id="afterSaleBack" type="com.egdfrm.unit.model.AfterSaleManagement.AfterSaleBack">
+        <result column="ID" property="ID" jdbcType="NUMERIC"/>
+        <result column="PRODUCT_BARCODE" property="PRODUCT_BARCODE" jdbcType="VARCHAR"/>
+        <result column="MATERIAL_ID" property="MATERIAL_ID" jdbcType="VARCHAR"/> 
+        <result column="DESCRIPTION" property="DESCRIPTION" jdbcType="VARCHAR"/> 
+        <result column="PRODUCTION_TIMES" property="PRODUCTION_TIMES" jdbcType="VARCHAR"/> 
+        <result column="ORDER_DELIVERY_TIMES" property="ORDER_DELIVERY_TIMES" jdbcType="VARCHAR"/> 
+        <result column="STATUS" property="STATUS" jdbcType="VARCHAR"/> 
+        <result column="RETURN_OPERATOR" property="RETURN_OPERATOR" jdbcType="VARCHAR"/> 
+        <result column="RETURN_OPERATION_TIME" property="RETURN_OPERATION_TIME" jdbcType="VARCHAR"/> 
+        <result column="DELIVERY_OPERATOR" property="DELIVERY_OPERATOR" jdbcType="VARCHAR"/> 
+        <result column="DELIVERY_OPERATION_TIME" property="DELIVERY_OPERATION_TIME" jdbcType="VARCHAR"/> 
+        <result column="EXPRESS_NO" property="EXPRESS_NO" jdbcType="VARCHAR"/> 
+        <result column="PRODUCT_CATEGORY" property="PRODUCT_CATEGORY" jdbcType="VARCHAR"/> 
+        <result column="BARCODEID" property="BARCODEID" jdbcType="VARCHAR"/> 
+        <result column="WORKORDER" property="WORKORDER" jdbcType="VARCHAR"/> 
+        <result column="SEGMENT1" property="SEGMENT1" jdbcType="VARCHAR"/>
+        <result column="ADDRESS" property="ADDRESS" jdbcType="VARCHAR"/>
+        <result column="PHONE" property="PHONE" jdbcType="VARCHAR"/>
+        <result column="CONTACT_NAME" property="CONTACT_NAME" jdbcType="VARCHAR"/>
+        <result column="MODEL" property="MODEL" jdbcType="VARCHAR"/>
+        <result column="RETURN_QTY" property="RETURN_QTY" jdbcType="VARCHAR"/>
+        <result column="RE_LOGI_COM" property="RE_LOGI_COM" jdbcType="VARCHAR"/>
+        <result column="SH_LOGI_COM" property="SH_LOGI_COM" jdbcType="VARCHAR"/>
+        <result column="RE_EXP_NO" property="RE_EXP_NO" jdbcType="VARCHAR"/>
+        <result column="SHIP_QTY" property="SHIP_QTY" jdbcType="VARCHAR"/>
+        <result column="SO_NO" property="SO_NO" jdbcType="VARCHAR"/>
+        <result column="REP_PEOPLE" property="REP_PEOPLE" jdbcType="VARCHAR"/>
+        <result column="REP_REASON" property="REP_REASON" jdbcType="VARCHAR"/>
+        <result column="REP_TYPE" property="REP_TYPE" jdbcType="VARCHAR"/>
+        <result column="ISSUE_DESCRIPTION" property="ISSUE_DESCRIPTION" jdbcType="VARCHAR"/>
+        <result column="CUSTOM_NAME" property="CUSTOM_NAME" jdbcType="VARCHAR"/>
+        <result column="REP_WORK_ORDER" property="REP_WORK_ORDER" jdbcType="VARCHAR"/>
+        <result column="OTHER_CUSTOM_NAME" property="OTHER_CUSTOM_NAME" jdbcType="VARCHAR"/>
+        <result column="CUSTOMER_FEEDBACK" property="CUSTOMER_FEEDBACK" jdbcType="VARCHAR"/>
+        <result column="SUPPLIER_DELIVERY_INFO" property="SUPPLIER_DELIVERY_INFO" jdbcType="VARCHAR"/>
+        <result column="PRINTER_STATUS" property="PRINTER_STATUS" jdbcType="VARCHAR"/> 
+    </resultMap>    
+	
+	<!--  NUMERIC VARCHAR -->
+    <resultMap id="afterSaleExcel" type="com.egdfrm.unit.excelmodel.AfterSaleSummaryExcel"> 
+    	<result column="rep_work_order" property="rep_work_order" jdbcType="VARCHAR"/>
+        <result column="model" property="model" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="product_barcode" property="product_barcode" jdbcType="VARCHAR"/>
+        <result column="custom_name" property="custom_name" jdbcType="VARCHAR"/>
+        <result column="re_exp_no" property="re_exp_no" jdbcType="VARCHAR"/>
+        <result column="re_logi_com" property="re_logi_com" jdbcType="VARCHAR"/>
+        <result column="return_qty" property="return_qty" jdbcType="VARCHAR"/>
+        <result column="return_operation_time" property="return_operation_time" jdbcType="VARCHAR"/>
+        <result column="contact_name" property="contact_name" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="address" property="address" jdbcType="VARCHAR"/>
+        <result column="customer_feedback" property="customer_feedback" jdbcType="VARCHAR"/> 
+        <result column="issue_description" property="issue_description" jdbcType="VARCHAR"/> 
+        <result column="rep_reason" property="rep_reason" jdbcType="VARCHAR"/> 
+        <result column="rep_people" property="rep_people" jdbcType="VARCHAR"/> 
+        <result column="rep_type" property="rep_type" jdbcType="VARCHAR"/> 
+        <result column="so_no" property="so_no" jdbcType="VARCHAR"/> 
+        <result column="delivery_operation_time" property="delivery_operation_time" jdbcType="VARCHAR"/> 
+        <result column="printer_status" property="printer_status" jdbcType="VARCHAR"/> 
+        <result column="description" property="description" jdbcType="VARCHAR"/>  
+    </resultMap>
+
+
+	<select id="getAfterSalePeopleList" resultMap="afterSalePeople" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+		select * from (
+						select ROWNUM rnum,
+						tt.id,tt.flex_value,tt.rep_people,tt.active_date,tt.create_by,tt.create_login_name,tt.create_date,tt.update_by,tt.update_login_name,tt.update_date
+						from
+						(
+								select mp.id,
+								mp.flex_value,
+								mp.rep_people,
+								to_char(mp.active_date, 'yyyy-MM-dd') active_date ,
+								mp.create_by,
+								(select u.login_name from mes.tt_application_user u where u.user_id=mp.create_by) create_login_name,
+								to_char(mp.create_date, 'yyyy-MM-dd hh24:mi:ss') create_date ,
+								mp.update_by,
+								(select u.login_name from mes.tt_application_user u where u.user_id=mp.update_by) update_login_name,
+								to_char(mp.update_date, 'yyyy-MM-dd hh24:mi:ss') update_date
+								from mes.mes_after_sale_people mp
+								where 1=1
+								<if test="model.repPeople!='' and model.repPeople!=null">and mp.rep_people like '%'|| #{model.repPeople}||'%'
+								</if>
+								order by mp.flex_value desc
+								) tt
+
+					where 1=1 	AND ROWNUM &lt;= #{page.endset}
+		) WHERE rnum &gt;= #{page.offset}
+	</select>
+	<select id="getAfterSalePeopleCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+		SELECT COUNT(1) COUNT FROM (
+					select mp.id,
+					   mp.flex_value,
+					   mp.rep_people,
+						mp.active_date,
+					   mp.create_by,
+					  (select u.login_name from mes.tt_application_user u where u.user_id=mp.create_by)  create_login_name,
+					   mp.create_date,
+					   mp.update_by,
+					  (select u.login_name from mes.tt_application_user u where u.user_id=mp.update_by)  update_login_name,
+			 	 mp.update_date from  mes.mes_after_sale_people mp
+		)  t1
+		where 1=1
+		<if test="model.repPeople!='' and model.repPeople!=null">
+				and t1.rep_people like '%'|| #{model.repPeople}||'%'
+		</if>
+
+	</select>
+	<update id="updatePeopleById" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+		update mes.mes_after_sale_people mp set mp.flex_value=#{model.flexValue},
+		<if test="model.activeDate!='' and model.activeDate!=null">
+			mp.active_date = to_date( #{model.activeDate}||' 12:00:00','yyyy-MM-dd HH24:mi:ss'),
+		</if>
+		<if test="model.activeDate ==null or model.activeDate ==''">
+			mp.active_date = null,
+		</if>
+		mp.update_by=#{uid},mp.update_date=sysdate
+		WHERE mp.id=#{model.id}
+	</update>
+	<update id="peopleAdd" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+		insert into mes.mes_after_sale_people m
+		(m.id,
+		m.flex_value,
+		m.rep_people,
+		m.active_date,
+		m.create_by,
+		m.create_date,
+		m.update_by,
+		m.update_date)
+		values
+		(mes.mes_after_sale_people_s.nextval,
+		#{model.flexValue},
+		#{model.repPeople},
+		<if test="model.activeDate!='' and model.activeDate!=null">
+	    to_date( #{model.activeDate}||' 12:00:00','yyyy-MM-dd HH24:mi:ss'),
+		</if>
+		<if test="model.activeDate ==null or model.activeDate ==''">
+		null,
+		</if>
+		#{uid},
+		sysdate,
+		null,
+		null)
+	</update>
+
+	<select id="peopleValidation" resultMap="afterSalePeople" parameterType="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+			select * from mes.mes_after_sale_people m where m.rep_people=#{model.repPeople}
+	</select>
+
+
+	<!--  NUMERIC VARCHAR -->
+	<resultMap id="afterSalePeople" type="com.egdfrm.unit.model.AfterSaleManagement.AfterSalePeople">
+		<result column="id" property="id" jdbcType="NUMERIC"/>
+		<result column="flex_value" property="flexValue" jdbcType="NUMERIC"/>
+		<result column="rep_people" property="repPeople" jdbcType="VARCHAR"/>
+		<result column="active_date" property="activeDate" jdbcType="VARCHAR"/>
+		<result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+		<result column="create_date" property="createDate" jdbcType="VARCHAR"/>
+		<result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+		<result column="update_date" property="updateDate" jdbcType="VARCHAR"/>
+		<result column="create_login_name" property="createLoginName" jdbcType="VARCHAR"/>
+		<result column="update_login_name" property="updateLoginName" jdbcType="VARCHAR"/>
+		<result column="status" property="status" jdbcType="VARCHAR"/>
+	</resultMap>
+
+
+</mapper>

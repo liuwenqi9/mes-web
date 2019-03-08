@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.SaotMapper">
+
+    <resultMap id="SaotMap" type="com.egdfrm.unit.model.report.Saot">
+        <result column="lend_number" property="jjNumber" jdbcType="VARCHAR" />
+        <result column="dept_desc" property="jjDept" jdbcType="VARCHAR" />
+        <result column="jj_desc" property="jjPurpose" jdbcType="VARCHAR" />
+        <result column="lend_by" property="jjPersion" jdbcType="VARCHAR" />
+        <result column="segment1" property="code" jdbcType="VARCHAR" />
+        <result column="jj_date" property="jjDate" jdbcType="VARCHAR" />
+        <result column="prod_type" property="model" jdbcType="VARCHAR" />
+        <result column="lend_quantity" property="actualQuantity" jdbcType="NUMERIC" />
+        <result column="barcode_text" property="barcode" jdbcType="VARCHAR" />
+        <result column="planned_return_date" property="planReturnDate" jdbcType="VARCHAR" />
+        <result column="actual_return_date" property="planActualDate" jdbcType="VARCHAR" />
+        <result column="remarks" property="evaluation" jdbcType="VARCHAR" />
+        <result column="description" property="describe" jdbcType="VARCHAR" />
+        <result column="h_remarks" property="remark" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+    <!--查询借机统计报表总数据量-->
+    <select id="findPageCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.report.Saot">
+        select count(1) from apps.mes_lend_lines_v
+        WHERE 1 = 1
+        <if test="saot.startTime != null and saot.startTime != ''">
+            AND jj_date &gt;= to_date(#{saot.startTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.endTime != null and saot.endTime != ''">
+            AND jj_date &lt;= to_date(#{saot.endTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="saot.code != null and saot.code != ''">
+            AND planned_return_date &gt;= to_date(#{saot.planReturnStartTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.planReturnEndTime != null and saot.planReturnEndTime != ''">
+            AND planned_return_date &lt;= to_date(#{saot.planReturnEndTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test='saot.state == "N"'>
+            AND barcode_text is not null
+            and actual_return_date is null
+        </if>
+        <if test="saot.code != null and saot.code != ''">
+            AND segment1 = #{saot.code}
+        </if>
+        <if test="saot.jjNumber != null and saot.jjNumber != ''">
+            AND lend_number = #{saot.jjNumber}
+        </if>
+    </select>
+
+    <!--查询借机统计报表-->
+    <select id="findPage" resultMap="SaotMap" parameterType="com.egdfrm.unit.model.report.Saot">
+      SELECT * from (
+        select ROWNUM rnum,lend_number,dept_desc,jj_desc,lend_by,segment1,jj_date,prod_type,lend_quantity,barcode_text,planned_return_date,actual_return_date,remarks,description,h_remarks
+        from apps.mes_lend_lines_v
+        WHERE 1 = 1
+        <if test="saot.startTime != null and saot.startTime != ''">
+            AND jj_date &gt;=  to_date(#{saot.startTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.endTime != null and saot.endTime != ''">
+            AND jj_date &lt;= to_date(#{saot.endTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="saot.planReturnStartTime != null and saot.planReturnStartTime != ''">
+            AND planned_return_date &gt;= to_date(#{saot.planReturnStartTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.planReturnEndTime != null and saot.planReturnEndTime != ''">
+            AND planned_return_date &lt;= to_date(#{saot.planReturnEndTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test='saot.state == "N"'>
+            AND barcode_text is not null
+            and actual_return_date is null
+        </if>
+        <if test="saot.code != null and saot.code != ''">
+            AND segment1 = #{saot.code}
+        </if>
+        <if test="saot.jjNumber != null and saot.jjNumber != ''">
+            AND lend_number = #{saot.jjNumber}
+        </if>
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+        order by lend_number
+    </select>
+
+
+    <!--借机统计数据查询-->
+    <select id="finAll" resultMap="SaotMap" parameterType="com.egdfrm.unit.model.report.Saot">
+        select lend_number,dept_desc,jj_desc,lend_by,segment1,jj_date,prod_type,lend_quantity,barcode_text,planned_return_date,actual_return_date,remarks,description,h_remarks
+        from apps.mes_lend_lines_v
+        WHERE 1 = 1
+        <if test="saot.startTime != null and saot.startTime != ''">
+            AND jj_date &gt;=  to_date(#{saot.startTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.endTime != null and saot.endTime != ''">
+            AND jj_date &lt;= to_date(#{saot.endTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="saot.planReturnStartTime != null and saot.planReturnStartTime != ''">
+            AND planned_return_date &gt;= to_date(#{saot.planReturnStartTime},'yyyy-MM-dd')
+        </if>
+        <if test="saot.planReturnEndTime != null and saot.planReturnEndTime != ''">
+            AND planned_return_date &lt;= to_date(#{saot.planReturnEndTime}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test='saot.state == "N"'>
+            AND barcode_text is not null
+            and actual_return_date is null
+        </if>
+        <if test="saot.code != null and saot.code != ''">
+            AND segment1 = #{saot.code}
+        </if>
+        <if test="saot.jjNumber != null and saot.jjNumber != ''">
+            AND lend_number = #{saot.jjNumber}
+        </if>
+        order by lend_number
+    </select>
+</mapper>

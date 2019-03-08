@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.CheckStockStatusMapper" >
+ 
+  
+  <!--入库单检查-->
+  <select id="getPackBarcodeByStockNum" parameterType="java.lang.String" resultType="java.util.Map">
+	<![CDATA[ 
+	 select h.barcode_text "barcodeText",
+       ms.segment1 "segment1",
+       sum(mh.quantity) "packQuantity"
+  from (select level l,
+               l.packing_barcode_id,
+               l.line_barcode_id,
+               l.wip_entity_id,
+               l.quantity
+          from mes.mes_packing_lines l
+         where l.packing_type <> 'PACK'
+         start with l.packing_barcode_id in
+                    (select packing_barcode_id
+                       from mes.mes_packing_headers mph
+                      where inv_number = #{stockNum,jdbcType=VARCHAR} and nvl(mph.status_code, 'WIP_COM') ='WIP_COM')
+        connect by l.packing_barcode_id = prior l.line_barcode_id) mh,
+       wip.wip_entities we,
+       wip.wip_discrete_jobs wdj,
+       apps.mtl_system_items_b ms,
+       apps.cux_item_perporty cp,
+       mes.mes_packing_headers h
+ where wdj.wip_entity_id = we.wip_entity_id
+   and wdj.organization_id = we.organization_id
+   and we.wip_entity_id = mh.wip_entity_id
+   and ms.organization_id = wdj.organization_id
+   and ms.inventory_item_id = wdj.primary_item_id
+   and cp.inventory_item_id = wdj.primary_item_id
+   and h.packing_barcode_id = mh.packing_barcode_id
+   and cp.org_id = 101
+ group by h.barcode_text,
+          ms.segment1
+	 ]]> 
+  </select>
+  <select id="verificationStockNum" parameterType="java.lang.String" resultType="java.lang.String">
+	<![CDATA[ 
+ 	 select m.inv_number
+		  from mes.mes_packing_headers m
+		 where m.inv_number is not null
+		   and m.inv_number = #{stockNum,jdbcType=VARCHAR}
+             
+	 ]]> 
+  </select>
+  
+ 
+</mapper>

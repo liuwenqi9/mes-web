@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.sale.SaleShipMapper">
+
+
+    <!--挑库发运条码总数-->
+    <select id="getSaleShipCount" resultType="java.lang.Long" parameterType="java.util.Map">
+    	select count(1) from apps.mes_pick_detail_v v where 1=1
+    	<if test="map.pickNum !=null and map.pickNum != '' ">
+			and v.request_number = #{map.pickNum,jdbcType=VARCHAR}
+		</if>
+		<if test="map.sourceHeaderNumber !=null and map.sourceHeaderNumber != '' ">
+			and v.source_header_number = #{map.sourceHeaderNumber,jdbcType=VARCHAR}
+		</if>
+		<if test="map.productBarcode !=null and map.productBarcode != '' ">
+			and v.barcode_text = #{map.productBarcode,jdbcType=VARCHAR}
+		</if>
+		<if test="map.customerName !=null and map.customerName != '' ">
+			and v.customer_name = #{map.customerName,jdbcType=VARCHAR}
+		</if>
+		<if test="map.startDate != null and map.startDate != ''">
+			and v.transaction_date &gt;= #{map.startDate}
+		</if>
+		<if test="map.endDate != null and map.endDate != ''">
+			and v.transaction_date &lt;= #{map.endDate}
+		</if>
+         <if test="map.segment1!=null and map.segment1 != ''">
+		        	and v.segment1 = #{map.segment1,jdbcType=VARCHAR}
+		 </if> 
+    </select>
+
+    <!--查询挑库发运条码分页数据-->
+    <select id="getSaleShipList" resultType="java.util.Map" parameterType="java.util.Map">
+    	select * from (
+			 select ROWNUM rnum, v.* from   apps.mes_pick_detail_v v
+			  where 1=1
+				<if test="map.pickNum !=null and map.pickNum != '' ">
+					and v.request_number = #{map.pickNum,jdbcType=VARCHAR}
+				</if>
+				<if test="map.sourceHeaderNumber !=null and map.sourceHeaderNumber != '' ">
+					and v.source_header_number = #{map.sourceHeaderNumber,jdbcType=VARCHAR}
+				</if>
+				<if test="map.productBarcode !=null and map.productBarcode != '' ">
+					and v.barcode_text = #{map.productBarcode,jdbcType=VARCHAR}
+				</if>
+				<if test="map.customerName !=null and map.customerName != '' ">
+					and v.customer_name = #{map.customerName,jdbcType=VARCHAR}
+				</if>
+				<if test="map.startDate != null and map.startDate != ''">
+		            and v.transaction_date &gt;= #{map.startDate}
+		        </if>
+		        <if test="map.endDate != null and map.endDate != ''">
+		            and v.transaction_date &lt;= #{map.endDate}
+		        </if>
+		        <if test="map.segment1!=null and map.segment1 != ''">
+		        	and v.segment1 = #{map.segment1,jdbcType=VARCHAR}
+		        </if>
+			  AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+    </select>
+   
+
+		<resultMap id="saleShipExcel" type="com.egdfrm.unit.excelmodel.SaleShipExcel">
+	        <result column="request_number" property="requestNumber" jdbcType="VARCHAR"/>
+	        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+	        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>
+	        <result column="primary_quantity" property="primaryQuantity" jdbcType="NUMERIC"/>
+	        <result column="barcode_ship_quantity" property="barcodeShipQuantity" jdbcType="NUMERIC"/>
+	        <result column="erp_ship_quantity" property="erpShipQuantity" jdbcType="NUMERIC"/>
+	        <result column="barcode_text" property="barcodeText" jdbcType="VARCHAR"/> 
+	        <result column="description" property="description" jdbcType="VARCHAR"/> 
+	        <result column="source_header_number" property="sourceHeaderNumber" jdbcType="VARCHAR"/>
+	        <result column="transaction_date" property="transactionDate" jdbcType="VARCHAR"/> 
+	        <result column="customer_name" property="customerName" jdbcType="VARCHAR"/>
+	        <result column="bc" property="bc" jdbcType="VARCHAR"/>  
+	    </resultMap>
+    <select id="exportExcel" resultMap="saleShipExcel" parameterType="java.util.Map"> 
+			 select  v.* from apps.mes_pick_detail_v v where 1=1
+				<if test="map.pickNum !=null and map.pickNum != '' ">
+					and v.request_number = #{map.pickNum,jdbcType=VARCHAR}
+				</if>
+				<if test="map.sourceHeaderNumber !=null and map.sourceHeaderNumber != '' ">
+					and v.source_header_number = #{map.sourceHeaderNumber,jdbcType=VARCHAR}
+				</if>
+				<if test="map.productBarcode !=null and map.productBarcode != '' ">
+					and v.barcode_text = #{map.productBarcode,jdbcType=VARCHAR}
+				</if>
+				<if test="map.customerName !=null and map.customerName != '' ">
+					and v.customer_name = #{map.customerName,jdbcType=VARCHAR}
+				</if>
+				<if test="map.startDate != null and map.startDate != ''">
+		            and v.transaction_date &gt;= #{map.startDate}
+		        </if>
+		        <if test="map.endDate != null and map.endDate != ''">
+		            and v.transaction_date &lt;= #{map.endDate}
+		        </if>
+		        <if test="map.segment1!=null and map.segment1 != ''">
+		        	and v.segment1 = #{map.segment1,jdbcType=VARCHAR}
+		        </if> 
+    </select> 
+    
+</mapper>

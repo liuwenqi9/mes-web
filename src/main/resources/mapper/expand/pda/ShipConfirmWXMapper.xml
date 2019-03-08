@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.ShipConfirmWXMapper" >
+  <!--PDA//外销发货-校验出货通知单 -->
+  <select id="callcheckOutSn" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_wx_ship_pkg.process_wx_check( 
+	  #{out_sn,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//检查出货通知单和包装箱，及出货通知单和包装箱的对应关系是否正确 -->
+  <select id="callCheckPackNo" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_wx_ship_pkg.process_pack_check(
+	#{out_sn,mode=IN,jdbcType=DECIMAL},
+	#{pack_id,mode=IN,jdbcType=DECIMAL},
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//外销发货-取得包装物料信息 -->
+  <select id="getPackInfo" parameterType="Map" resultType="java.util.Map" >
+      
+      select ms.segment1,
+       apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type,
+       t.pack_quantity
+  from mes.mes_packing_headers t,
+       apps.mtl_system_items_b      ms
+ where t.barcode_text = #{pack_no,jdbcType=VARCHAR}
+   and ms.inventory_item_id = t.inventory_item_id
+   and ms.organization_id = t.organization_id
+      
+  </select>
+  <!--PDA//外销发货-取得包装ID -->
+  <select id="getPackID" parameterType="Map" resultType="java.util.Map" >
+      
+      select t.packing_barcode_id 
+  from mes.mes_packing_headers t 
+ where t.barcode_text = #{pack_no,jdbcType=VARCHAR}
+      
+  </select>
+  <!--PDA//外销发货-提交-插入临时表 -->
+  <select id="callCommitInsertTempTable" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_wx_ship_pkg.insert_transaction_temp( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{out_sn,mode=IN,jdbcType=DECIMAL},
+	  #{pack_id,mode=IN,jdbcType=VARCHAR},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA//外销发货-提交-处理临时表 -->
+  <select id="callCommitProcesTempTable" parameterType="Map" statementType="CALLABLE">
+	{call apps.mes_wx_ship_pkg.process_mes_transaction( 
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{out_sn,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

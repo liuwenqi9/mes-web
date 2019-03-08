@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.InspectionMapper" > 
+
+	 <!-- inmap -->
+	 <parameterMap type="Map" id="inMap">
+	    <parameter property="userId"  />
+	    <parameter property="packingBarcodeId"  />
+	    <parameter property="checkStatus"  />
+	    <parameter property="checkMsg"  /> 
+	    <parameter property="speQty"  /> 
+	    <parameter property="majorQty"  /> 
+	    <parameter property="secQty"  /> 
+	    <parameter property="checkRemark"  /> 
+	    <parameter property="inspectionNumber"  />
+	    <parameter property="inspectionNumberOut"  />
+	    <parameter property="invNumber"  />
+	    <parameter property="invNumberOut"  /> 
+	    <parameter property="dbreturn.xStatus" />
+	    <parameter property="dbreturn.xMessage" />
+	 </parameterMap>
+
+  <!--检验 -->
+  <select id="callInspection" parameterMap="inMap" statementType="CALLABLE" >
+
+	{call apps.mes_barcodes_inspect_pkg.pass_check(
+	#{userId,mode=IN,jdbcType=DECIMAL},
+	#{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	#{checkStatus,mode=IN,jdbcType=VARCHAR},
+	#{checkMsg,mode=IN,jdbcType=VARCHAR},
+	#{speQty,mode=IN,jdbcType=VARCHAR},
+	#{majorQty,mode=IN,jdbcType=VARCHAR},
+	#{secQty,mode=IN,jdbcType=VARCHAR},
+	#{checkRemark,mode=IN,jdbcType=VARCHAR}, 
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+	#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)} 
+  </select> 
+ 
+ <!--报检-->
+  <select id="callInspections" parameterMap="inMap" statementType="CALLABLE" >
+
+	{call apps.mes_barcodes_inspect_pkg.inspect(
+	#{userId,mode=IN,jdbcType=DECIMAL},
+	#{inspectionNumber,mode=IN,jdbcType=VARCHAR},
+	#{packingBarcodeId,mode=IN,jdbcType=DECIMAL},  
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+	#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)} 
+  </select> 
+  
+  
+  <!--生成报检单-->
+  <select id="callGenerateInspection"  parameterMap="inMap" statementType="CALLABLE" > 
+	{call apps.mes_barcodes_inspect_pkg.get_inspect_number(
+	#{inspectionNumberOut,mode=OUT,jdbcType=VARCHAR}
+	)} 
+  </select> 
+  
+  <!--根据id获取报检状态-->
+  <select id="getCheckStatusById"  parameterType="java.lang.String" resultType="java.lang.String"  > 
+	 SELECT  M.check_status
+	  FROM MES.MES_PACKING_HEADERS M
+	 WHERE M.PACKING_BARCODE_ID = #{id,jdbcType=VARCHAR}
+	 
+  </select> 
+  
+  <!--生成入库单好-->
+  <select id="callGenerateInvNumber"  parameterMap="inMap" statementType="CALLABLE" > 
+	{call apps.mes_barcodes_inspect_pkg.get_inv_number(
+	#{invNumberOut,mode=OUT,jdbcType=VARCHAR}
+	)} 
+  </select>  
+ 
+  <!--update入库单-->
+  <select id="callUpdateInvNumber"  parameterMap="inMap" statementType="CALLABLE" > 
+	{call apps.mes_barcodes_inspect_pkg.inv(
+	#{userId,mode=IN,jdbcType=DECIMAL},
+	#{invNumber,mode=IN,jdbcType=VARCHAR},
+	#{packingBarcodeId,mode=IN,jdbcType=DECIMAL},  
+	#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+	#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)} 
+  </select>
+   
+   <!-- 根据入库单号，获取本次入库单据 -->
+   <select id="getInvNumberList"  parameterType="java.lang.String" resultType="java.util.Map"  > 
+		select inv_number,
+		       t.subinventory_code,
+		       mo_order,
+		       wip_entity_name,
+		       plan_line,
+		       segment2,
+		       segment1,
+		       sum(t.pack_quantity) inv_quantity,
+		       t.locattion_code
+		  from apps.mes_packing_headers_inv_v t 
+		  where  t.inv_number = #{invNumber,jdbcType=VARCHAR}
+		 group by inv_number,
+		          t.subinventory_code,
+		          mo_order,
+		          wip_entity_name,
+		          plan_line,
+		          segment2,
+		          segment1,
+		          t.locattion_code
+  </select> 
+  
+  <!--验证是否已入库-->
+  <select id="isInvNumber"  parameterType="java.lang.String" resultType="java.lang.String"  > 
+	 SELECT  M.INV_NUMBER
+	  FROM MES.MES_PACKING_HEADERS M
+	 WHERE M.PACKING_BARCODE_ID = #{packingBarcodeId,jdbcType=VARCHAR}
+	 
+  </select>
+  
+  
+   <!--报检 数据列表 -->
+   <select id="getInspectionList" parameterType="java.util.Map" resultType="java.util.Map">
+   select packing_barcode_id,LOGIN_NAME,PLAN_LINE,BARCODE_TEXT,WIP_ENTITY_NAME,MO_ORDER
+	 		,SEGMENT1,DESCRIPTION,PACK_QUANTITY,PACK_FLAG,CHECK_STATUS_F,INSPECT_NUMBER,SEGMENT2,INSPECT_DATE,CHECK_DATE FROM(
+	   		SELECT ROWNUM rnum,
+			 V.packing_barcode_id
+			,V.LOGIN_NAME
+			,V.PLAN_LINE
+			,V.BARCODE_TEXT
+			,V.WIP_ENTITY_NAME
+			,V.MO_ORDER
+			,V.SEGMENT1
+			,V.DESCRIPTION
+			,V.SEGMENT2
+			,V.PACK_QUANTITY
+			,V.PACK_FLAG  
+			,CASE V.CHECK_STATUS WHEN 'N' THEN '未报检' WHEN 'R' THEN '已提交' WHEN 'P' THEN  '已通过' WHEN 'E' THEN '不通过' WHEN 'E' THEN '退回' END AS CHECK_STATUS_F
+			,V.INSPECT_NUMBER,INSPECT_DATE,CHECK_DATE
+			 FROM APPS.MES_PACKING_HEADERS_CHECK_V V
+			 WHERE 1=1
+   			<if test="map.flag =='true'">
+          		 AND V.PLAN_LINE = #{map.line}
+	        </if>
+	        <if test="map.flag =='false'">
+	        	<if test="map.productionLine != null and map.productionLine !='' ">
+	           		AND V.PLAN_LINE = #{map.productionLine}
+	           </if>
+	        </if>
+	        <if test="map.workOrderNumber != null and map.workOrderNumber !='' ">
+	           AND V.WIP_ENTITY_NAME = #{map.workOrderNumber}
+	        </if>
+	        <if test="map.fullPackIdentify != null and map.fullPackIdentify !='' ">
+	           AND V.PACK_FLAG = #{map.fullPackIdentify}
+	        </if>
+	        <if test="map.inspectionIdentify != null and map.inspectionIdentify !='' ">
+	           AND V.CHECK_STATUS = #{map.inspectionIdentify}
+	        </if>
+	    AND ROWNUM &lt;= #{page.endset}
+    ) WHERE rnum &gt;= #{page.offset}  ORDER BY BARCODE_TEXT
+   </select>
+   
+ <!--   /**
+	 * 报检单的分页数据(new)
+	 * @param productionLine 生产线
+	 * @param workOrderNumber 工单号
+	 * @param fullPackIdentify 满包标识
+	 * @param inspectionIdentify 报检标识
+	 * @return falg line
+	 */ -->
+  <!-- 报检记录总条数-->
+  <select id="getInspectionCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+   	 SELECT COUNT(*) FROM APPS.MES_PACKING_HEADERS_CHECK_V  WHERE 1=1 
+   	 	<if test="map.flag =='true'">
+           AND PLAN_LINE = #{map.line}
+        </if>
+        <if test="map.flag =='false'">
+        	<if test="map.productionLine != null and map.productionLine !='' ">
+          		 AND PLAN_LINE = #{map.productionLine}
+			 </if>
+        </if>
+        <if test="map.workOrderNumber != null and map.workOrderNumber !='' ">
+           AND WIP_ENTITY_NAME = #{map.workOrderNumber}
+        </if>
+        <if test="map.fullPackIdentify != null and map.fullPackIdentify !='' ">
+           AND PACK_FLAG = #{map.fullPackIdentify}
+        </if>
+        <if test="map.inspectionIdentify != null and map.inspectionIdentify !='' ">
+           AND CHECK_STATUS = #{map.inspectionIdentify}
+        </if> 
+	</select>   
+	
+	
+  <!--检验 数据列表 -->
+  <select id="getInspectionsList" parameterType="java.util.Map" resultType="java.util.Map">
+	 select packing_barcode_id,INSPECT_NUMBER,PLAN_LINE,USER_NAME,BARCODE_TEXT,PACK_QUANTITY
+	 		,WIP_ENTITY_NAME,SEGMENT1,SEGMENT2,DESCRIPTION,PACK_FLAG,INSPECT_DATE_F,CHECK_STATUS_F,CHECK_DATE,MO_ORDER FROM(
+			SELECT ROWNUM rnum,V.packing_barcode_id,V.INSPECT_NUMBER
+				,V.USER_NAME,V.PLAN_LINE,V.BARCODE_TEXT,V.PACK_QUANTITY
+				,V.WIP_ENTITY_NAME,V.SEGMENT1,V.SEGMENT2,V.DESCRIPTION
+				,V.PACK_FLAG ,INSPECT_DATE INSPECT_DATE_F
+				,CASE V.CHECK_STATUS WHEN 'N' THEN '未报检' WHEN 'R' THEN '已提交' WHEN 'P' THEN  '已通过' WHEN 'E' THEN '不通过'  WHEN 'E' THEN '退回' END AS CHECK_STATUS_F,
+	  			CHECK_DATE,MO_ORDER
+				FROM APPS.MES_PACKING_HEADERS_CHECK_V V
+				WHERE 1=1
+	  <if test="map.planLine != null and map.planLine !='' ">
+		  AND PLAN_LINE = #{map.planLine}
+	  </if>
+	  <if test="map.workOrderNumber != null and map.workOrderNumber != '' ">
+		  AND WIP_ENTITY_NAME = #{map.workOrderNumber}
+	  </if>
+	  <if test="map.inspectNumber != null and map.inspectNumber != '' ">
+		  AND INSPECT_NUMBER = #{map.inspectNumber}
+	  </if>
+	  <if test="map.checkStatus != null and map.checkStatus !='' ">
+		  AND CHECK_STATUS = #{map.checkStatus}
+	  </if>
+	  <if test="map.modelNum != null and map.modelNum !='' ">
+		  AND SEGMENT2 LIKE '%'||#{map.modelNum}||'%'
+	  </if>
+	  <if test="map.moNum != null and map.moNum !='' ">
+		  AND MO_ORDER LIKE '%'||#{map.moNum}||'%'
+	  </if>
+		AND ROWNUM &lt;= #{page.endset}
+    ) WHERE rnum &gt;= #{page.offset}  ORDER BY INSPECT_NUMBER
+	</select>  
+    
+   <!-- 检验记录总条数-->
+  <select id="getInspectionsCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+	  SELECT COUNT(*) FROM APPS.MES_PACKING_HEADERS_CHECK_V WHERE 1=1
+	  <if test="map.planLine != null and map.planLine !='' ">
+		  AND PLAN_LINE = #{map.planLine}
+	  </if>
+	  <if test="map.workOrderNumber != null and map.workOrderNumber != '' ">
+		  AND WIP_ENTITY_NAME = #{map.workOrderNumber}
+	  </if>
+	  <if test="map.inspectNumber != null and map.inspectNumber != '' ">
+		  AND INSPECT_NUMBER = #{map.inspectNumber}
+	  </if>
+	  <if test="map.checkStatus != null and map.checkStatus !=''  ">
+		  AND CHECK_STATUS = #{map.checkStatus}
+	  </if>
+	  <if test="map.modelNum != null and map.modelNum !='' ">
+		  AND SEGMENT2 LIKE '%'||#{map.modelNum}||'%'
+	  </if>
+	  <if test="map.moNum != null and map.moNum !='' ">
+		  AND MO_ORDER LIKE '%'||#{map.moNum}||'%'
+	  </if>
+	</select> 
+    
+ 
+</mapper>

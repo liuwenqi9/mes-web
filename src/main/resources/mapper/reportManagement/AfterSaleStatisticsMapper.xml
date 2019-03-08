@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.AfterSaleStatisticsMapper">
+
+    <resultMap id="report" type="com.egdfrm.unit.model.stock.AfterSaleStatisticsExcel"><!-- VARCHAR  NUMERIC-->
+        <result column="custom_name" property="custom_name" jdbcType="VARCHAR" />
+        <result column="model" property="model" jdbcType="VARCHAR" />
+        <result column="segment1" property="segment1" jdbcType="VARCHAR" />
+        <result column="product_barcode" property="product_barcode" jdbcType="VARCHAR" />
+        <result column="return_qty" property="return_qty" jdbcType="NUMERIC" />
+        <result column="rep_type" property="rep_type" jdbcType="VARCHAR" /><!-- 退回类型  -->
+        <result column="issue_description" property="issue_description" jdbcType="VARCHAR" />
+        <result column="rep_reason" property="rep_reason" jdbcType="VARCHAR" />
+        <result column="return_operation_time" property="return_operation_time" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="delivery_operation_time" property="delivery_operation_time" jdbcType="VARCHAR" />
+        <result column="sh_logi_com" property="sh_logi_com" jdbcType="VARCHAR" />
+        <result column="sh_exp_no" property="sh_exp_no" jdbcType="VARCHAR" />
+        <result column="rep_work_order" property="rep_work_order" jdbcType="VARCHAR" />
+        <result column="sh_logi_com" property="sh_logi_com" jdbcType="VARCHAR" /> 
+        <result column="maintain_date" property="maintain_date" jdbcType="VARCHAR" />
+        <result column="wip_name" property="wip_name" jdbcType="VARCHAR" />
+        <result column="prod_date" property="prod_date" jdbcType="VARCHAR" />
+        <result column="line_code" property="line_code" jdbcType="VARCHAR" />
+        <result column="ship_date" property="ship_date" jdbcType="VARCHAR" />
+        <result column="cus_name" property="cus_name" jdbcType="VARCHAR" /> 
+        <result column="re_exp_no" property="re_exp_no" jdbcType="VARCHAR" /> 
+        <result column="outer_contact" property="outer_contact" jdbcType="VARCHAR" />
+        <result column="inter_note" property="inter_note" jdbcType="VARCHAR" />
+        <result column="remakr" property="remakr" jdbcType="VARCHAR" />
+        <result column="contact_name" property="contact_name" jdbcType="VARCHAR" />
+        <result column="phone" property="phone" jdbcType="VARCHAR" />
+        <result column="address" property="address" jdbcType="VARCHAR" />
+        <result column="rep_people" property="rep_people" jdbcType="VARCHAR" />
+        <result column="customer_feedback" property="customer_feedback" jdbcType="VARCHAR" />
+        <result column="supplier_delivery_info" property="supplier_delivery_info" jdbcType="VARCHAR" />  <!-- 供应商快递信息  --> 
+        <result column="hand_over_date" property="hand_over_date" jdbcType="VARCHAR" />  <!-- 交仓库日期 -->
+        
+    </resultMap>
+
+
+    <!--count-->
+    <select id="getCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.stock.AfterSaleStatisticsExcel">
+        select count(1) tatol from apps.MES_AFTER_SALE_v t
+			 where 1 = 1
+			 
+		<if test="model.sh_exp_no != null and model.sh_exp_no != '' "><!--出货维修单-->
+        	and t.sh_exp_no = #{model.sh_exp_no}  
+        </if>
+		<if test="model.rep_work_order != null and model.rep_work_order != '' "><!--维修单-->
+        	and t.rep_work_order = #{model.rep_work_order}  
+        </if> 
+		<if test="model.custom_name != null and model.custom_name != '' "><!--客户-->
+        	and t.custom_name like '%'|| #{model.custom_name} ||'%'
+        </if>
+        <if test="model.model != null and model.model != '' "><!--型号-->
+        	and t.model = #{model.model}
+        </if>
+        <if test="model.re_exp_no != null and model.re_exp_no != '' "><!--退货物流单号-->
+        	and t.re_exp_no = #{model.re_exp_no}
+        </if>
+        <if test="model.product_barcode != null and model.product_barcode != '' "><!--机身码-->
+        	and t.product_barcode = #{model.product_barcode}
+        </if>	 
+        <if test="model.ship_date_start != null and model.ship_date_start != '' "><!-- 出货时间 开始时间-->
+        	and t.delivery_operation_time &gt;=to_date(#{model.ship_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.ship_date_end != null and model.ship_date_end  != '' "><!-- 出货时间  结束时间 -->
+        	and t.delivery_operation_time &lt;= to_date(#{model.ship_date_end }||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+		 <if test="model.start_time != null and model.start_time != '' "><!-- 退回时间 开始时间-->
+        	and t.return_operation_time &gt;=to_date(#{model.start_time}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.end_time != null and model.end_time != '' "><!--  结束时间 -->
+        	and t.return_operation_time &lt;= to_date(#{model.end_time}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.status != null and model.status != '' "><!-- 状态-->
+        	and t.status = #{model.status}
+        </if>
+         <if test="model.rep_people!= null and model.rep_people != '' "><!-- 维修员-->
+        	and t.rep_people = #{model.rep_people}
+        </if> 
+        <if test="model.phone!= null and model.phone != '' "><!-- 联系电话-->
+        	and t.phone = #{model.phone}
+        </if> 
+        <if test="model.contact_name != null and model.contact_name != '' "><!-- 联系人-->
+        	and t.contact_name = #{model.contact_name}
+        </if>
+    </select>
+
+    <!--分页数据-->
+    <select id="findPage" resultMap="report" parameterType="com.egdfrm.unit.model.stock.AfterSaleStatisticsExcel">
+      SELECT * from (
+         select ROWNUM rnum,t.custom_name,t.model,t.segment1,t.product_barcode,t.return_qty,t.rep_type,t.issue_description,t.rep_reason,
+         to_char(t.return_operation_time,'yyyy-mm-dd') return_operation_time,t.maintain_date,t.wip_name,t.prod_date,t.line_code, t.ship_date,t.cus_name,t.re_exp_no
+		 ,t.rep_work_order,decode(t.status,'return','未出货','delivery','已出货') status,t.sh_logi_com,t.sh_exp_no,to_char(t.delivery_operation_time,'yyyy-mm-dd') delivery_operation_time
+		 ,t.outer_contact,t.inter_note,t.remakr,t.contact_name,t.phone,t.address,t.rep_people,t.customer_feedback,t.supplier_delivery_info
+		 ,to_char(t.hand_over_date,'yyyy-mm-dd') hand_over_date
+			  from apps.MES_AFTER_SALE_v t
+			 where 1 = 1  
+		
+		<if test="model.sh_exp_no != null and model.sh_exp_no != '' "><!--出货维修单-->
+        	and t.sh_exp_no = #{model.sh_exp_no}  
+        </if>
+		<if test="model.rep_work_order != null and model.rep_work_order != '' "><!--维修单-->
+        	and t.rep_work_order = #{model.rep_work_order}  
+        </if> 
+		<if test="model.custom_name != null and model.custom_name != '' "><!--客户-->
+        	and t.custom_name like '%'|| #{model.custom_name} ||'%'
+        </if>
+        <if test="model.model != null and model.model != '' "><!--型号-->
+        	and t.model = #{model.model}
+        </if>
+        <if test="model.re_exp_no != null and model.re_exp_no != '' "><!--退货物流单号-->
+        	and t.re_exp_no = #{model.re_exp_no}
+        </if>
+        <if test="model.product_barcode != null and model.product_barcode != '' "><!--机身码-->
+        	and t.product_barcode = #{model.product_barcode}
+        </if>	
+        <if test="model.ship_date_start != null and model.ship_date_start != '' "><!-- 出货时间 开始时间-->
+        	and t.delivery_operation_time &gt;=to_date(#{model.ship_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.ship_date_end != null and model.ship_date_end  != '' "><!-- 出货时间  结束时间 -->
+        	and t.delivery_operation_time &lt;= to_date(#{model.ship_date_end }||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+		 <if test="model.start_time != null and model.start_time != '' "><!-- 退回时间 开始时间-->
+        	and t.return_operation_time &gt;=to_date(#{model.start_time}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.end_time != null and model.end_time != '' "><!--  结束时间 -->
+        	and t.return_operation_time &lt;= to_date(#{model.end_time}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.status != null and model.status != '' "><!-- 状态-->
+        	and t.status = #{model.status}
+        </if> 
+        <if test="model.rep_people!= null and model.rep_people != '' "><!-- 维修员-->
+        	and t.rep_people = #{model.rep_people}
+        </if> 
+        <if test="model.phone!= null and model.phone != '' "><!-- 联系电话-->
+        	and t.phone = #{model.phone}
+        </if> 
+        <if test="model.contact_name != null and model.contact_name != '' "><!-- 联系人-->
+        	and t.contact_name = #{model.contact_name}
+        </if>
+        
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+        
+    </select>
+
+
+     
+    <select id="exportExcel" resultMap="report" parameterType="com.egdfrm.unit.model.stock.AfterSaleStatisticsExcel">
+        select t.custom_name,t.model,t.segment1,t.product_barcode,t.return_qty,t.rep_type,t.issue_description,t.rep_reason,
+         to_char(t.return_operation_time,'yyyy-mm-dd') return_operation_time,t.maintain_date,t.wip_name,t.prod_date,t.line_code, t.ship_date,t.cus_name,t.re_exp_no
+		 ,t.rep_work_order,decode(t.status,'return','未出货','delivery','已出货') status,t.sh_logi_com,t.sh_exp_no,to_char(t.delivery_operation_time,'yyyy-mm-dd') delivery_operation_time
+		 ,t.outer_contact,t.inter_note,t.remakr,t.contact_name,t.phone,t.address,t.rep_people ,t.customer_feedback,t.supplier_delivery_info
+		 ,to_char(t.hand_over_date,'yyyy-mm-dd') hand_over_date
+			  from apps.MES_AFTER_SALE_v t
+			 where 1 = 1
+			
+		<if test="model.sh_exp_no != null and model.sh_exp_no != '' "><!--出货维修单-->
+        	and t.sh_exp_no = #{model.sh_exp_no}  
+        </if>
+		<if test="model.rep_work_order != null and model.rep_work_order != '' "><!--维修单-->
+        	and t.rep_work_order = #{model.rep_work_order}  
+        </if> 
+		<if test="model.custom_name != null and model.custom_name != '' "><!--客户-->
+        	and t.custom_name like '%'|| #{model.custom_name} ||'%'
+        </if>
+        <if test="model.model != null and model.model != '' "><!--型号-->
+        	and t.model = #{model.model}
+        </if>
+        <if test="model.re_exp_no != null and model.re_exp_no != '' "><!--退货物流单号-->
+        	and t.re_exp_no = #{model.re_exp_no}
+        </if>
+        <if test="model.product_barcode != null and model.product_barcode != '' "><!--机身码-->
+        	and t.product_barcode = #{model.product_barcode}
+        </if>	
+         <if test="model.ship_date_start != null and model.ship_date_start != '' "><!-- 出货时间 开始时间-->
+        	and t.delivery_operation_time &gt;=to_date(#{model.ship_date_start}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.ship_date_end != null and model.ship_date_end  != '' "><!-- 出货时间  结束时间 -->
+        	and t.delivery_operation_time &lt;= to_date(#{model.ship_date_end }||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+		 <if test="model.start_time != null and model.start_time != '' "><!-- 退回时间 开始时间-->
+        	and t.return_operation_time &gt;=to_date(#{model.start_time}||' 00:00:00','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.end_time != null and model.end_time != '' "><!--  结束时间 -->
+        	and t.return_operation_time &lt;= to_date(#{model.end_time}||' 23:59:59','yyyy-MM-dd HH24:mi:ss')
+        </if>
+        <if test="model.status != null and model.status != '' "><!-- 状态-->
+        	and t.status = #{model.status}
+        </if>  
+		 <if test="model.rep_people!= null and model.rep_people != '' "><!-- 维修员-->
+        	and t.rep_people = #{model.rep_people}
+        </if> 
+        <if test="model.phone!= null and model.phone != '' "><!-- 联系电话-->
+        	and t.phone = #{model.phone}
+        </if> 	 
+		<if test="model.contact_name != null and model.contact_name != '' "><!-- 联系人-->
+        	and t.contact_name = #{model.contact_name}
+        </if> 
+    </select>
+</mapper>

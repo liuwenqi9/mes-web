@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.inventoryManagement.TakeStockMapper" >
+ 
+  <!-- 获取 （选择 ）子库 列表 -->
+  <select id="getSubpoolList" parameterType="java.util.Map" resultType="java.util.Map">
+  SELECT SECONDARY_INVENTORY_NAME DATA1, DESCRIPTION DATA2 FROM(
+	   SELECT ROWNUM rnum,M.SECONDARY_INVENTORY_NAME , M.DESCRIPTION 
+	  		FROM APPS.MTL_SUBINVENTORIES_ALL_V M
+	  		WHERE 1=1
+	 		 <if test="map.subpool != null and map.subpool != ''">
+	 		   AND M.SECONDARY_INVENTORY_NAME LIKE '%'||#{map.subpool}||'%'
+	 		</if> 
+	 		 AND ROWNUM &lt;= #{page.endset}
+    ) WHERE rnum &gt;= #{page.offset}	
+	</select>
+	
+	<!-- 获取 （选择 ）子库 总记录数-->
+  <select id="getSubpoolCount" parameterType="java.util.Map"  resultType="java.lang.Long">
+   SELECT COUNT(*) count
+  		FROM APPS.MTL_SUBINVENTORIES_ALL_V 
+  		WHERE 1=1
+ 		 <if test="map.subpool != null and map.subpool != ''">
+ 		   AND SECONDARY_INVENTORY_NAME LIKE '%'||#{map.subpool}||'%'
+ 		</if> 
+	</select>
+	
+	<!-- 获取 （选择 ）货位列表 -->
+  <select id="getLocationList" parameterType="java.util.Map" resultType="java.util.Map">
+	  SELECT LOCATTION_CODE DATA1, DESCRIPTION DATA2 FROM(	 
+	   	 SELECT ROWNUM rnum,M.LOCATTION_CODE, M.DESCRIPTION FROM( 
+		   	 SELECT M.LOCATTION_CODE, M.DESCRIPTION 
+		 	  	FROM MES.MES_ITEM_LOCATTIONS M
+			  		WHERE nvl(m.disable_date, sysdate + 1) > sysdate
+			 		<if test="map.location != null and map.location != ''">
+			 		   AND M.LOCATTION_CODE=#{map.location}
+			 		</if>
+			 		<if test="map.subpool != null and map.subpool != ''">
+			 		   AND M.subinventory_code =#{map.subpool}
+			 		</if>
+			 		ORDER BY M.LOCATTION_CODE
+			 	) M WHERE 1=1	 
+			 		AND ROWNUM &lt;= #{page.endset}
+    ) WHERE rnum &gt;= #{page.offset}
+	</select>
+	
+	<!-- 获取 （选择 ）总记录数 -->
+  <select id="getLocationCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+   	 SELECT COUNT(*) count
+ 	  FROM MES_ITEM_LOCATTIONS 
+  		WHERE nvl(disable_date, sysdate + 1) > sysdate
+	 		<if test="map.location != null and map.location != ''">
+	 		   AND LOCATTION_CODE=#{map.location}
+	 		</if>
+	 		<if test="map.subpool != null and map.subpool != ''">
+	 		   AND subinventory_code =#{map.subpool}
+	 		</if>
+	</select>
+
+	<!-- 获取 （选择 ）物料描述列表 -->
+  <select id="getItemList" parameterType="java.util.Map" resultType="java.util.Map">
+	  SELECT segment1 DATA1,prod_type DATA2 FROM(	 
+	   		 <![CDATA[
+		   	 select  ROWNUM rnum,segment1,apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type,description
+		  from apps.mtl_system_items_b ms
+		 where substr(ms.segment1, 1, 2) in ('18', '19')
+			   and ms.inventory_item_status_code <> 'Inactive'
+			   and ms.organization_id = 101 
+			]]>
+	 		<if test="map.segment1 != null and map.segment1 != ''">
+	 		  and ms.segment1=#{map.segment1} 
+	 		</if> 
+	 		AND ROWNUM &lt;= #{page.endset}
+    ) WHERE rnum &gt;= #{page.offset}
+	</select>
+	
+	<!-- 获取 （选择 ）物料描述总记录数 -->
+  <select id="getItemCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+  		<![CDATA[
+		   	 select count(1)
+		  from apps.mtl_system_items_b ms
+		 where substr(ms.segment1, 1, 2) in ('18', '19')
+			   and ms.inventory_item_status_code <> 'Inactive'
+			   and ms.organization_id = 101  
+		]]>
+		<if test="map.segment1 != null and map.segment1 != ''">
+	 		  and ms.segment1=#{map.segment1} 
+	 		</if> 
+	</select>
+	
+	<!-- inmap -->
+	 <parameterMap type="Map" id="inMap">
+	    <parameter mode="IN" javaType="java.lang.Integer" property="organizationId"  /><!-- 组组织id -->
+	    <parameter mode="IN" javaType="java.lang.String" property="subinventoryCode"  /> <!-- 子库 -->
+	    <parameter mode="IN" javaType="java.lang.String" property="locationCodeStart"  />     <!-- 开始货位 -->
+	    <parameter mode="IN" javaType="java.lang.String" property="locationCodeEnd"  />     <!-- 结束货位 -->
+	    <parameter mode="IN" javaType="java.lang.String" property="item"  />     <!--物料编码 -->
+	    <parameter mode="IN" javaType="java.lang.String" property="pdNumber"  />     <!--盘点号-->
+	    <parameter mode="IN" javaType="java.lang.Integer" property="userId"  />   <!-- 登录id -->
+	    <parameter mode="OUT" javaType="java.lang.String"  property="dbreturn.xStatus" />  <!-- 返回状态  -->
+	    <parameter mode="OUT" javaType="java.lang.String"  property="dbreturn.xMessage" />  <!-- 返回提示语 -->
+	 </parameterMap>
+	
+	<!--生成盘点报表 -->
+  <select id="callGeneratePD" parameterMap="inMap" statementType="CALLABLE" >
+
+	{call apps.mes_barcodes_pd_pkg.generate_pd(
+	    #{organizationId,mode=IN,jdbcType=DECIMAL},
+	    #{subinventoryCode,mode=IN,jdbcType=VARCHAR},
+	   	#{locationCodeStart,mode=IN,jdbcType=VARCHAR},
+	   	#{locationCodeEnd,mode=IN,jdbcType=VARCHAR},
+	   	#{item,mode=IN,jdbcType=VARCHAR},
+	    #{userId,mode=IN,jdbcType=DECIMAL},
+	    #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+  	)} 
+  </select> 
+	
+	<!--更新到最新的盘点号-->
+  <select id="callpdUpdate" parameterMap="inMap" statementType="CALLABLE" > 
+	{call apps.mes_barcodes_pd_pkg.pd_update(
+	    #{pdNumber,mode=IN,jdbcType=VARCHAR},
+	    #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},
+		#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+  	)} 
+  </select> 
+	
+	<!--盘点历史记录 列表 -->
+  <select id="getpdHeadersList" parameterType="java.util.Map" resultType="java.util.Map">
+	 select pd_number,subinventory_code,locattion_code,locattion_t,item,pd_date, status_flag,header_id,ORGANIZATION_ID FROM(	 
+			select ROWNUM rnum, ph.pd_number,ph.subinventory_code,ph.locattion_code,ph.locattion_t,ph.item,ph.pd_date, ph.status_flag,ph.header_id,ph.ORGANIZATION_ID
+			  from (select pd_number,subinventory_code,locattion_code,locattion_t,item,pd_date, status_flag,header_id,ORGANIZATION_ID 
+			  			from mes.mes_stocktaking_headers  order by pd_number desc ) ph
+	  		WHERE 1=1
+	 		<if test="map.status != null and map.status != ''">
+           		 AND ph.STATUS_FLAG = #{map.status}
+	        </if>
+	        <if test="map.beginDate != null and map.beginDate != ''">
+	            AND ph.PD_DATE &gt;= #{map.beginDate}
+	        </if>
+	        <if test="map.endDate != null and map.endDate != ''">
+	            AND ph.PD_DATE &lt;= #{map.endDate}
+	        </if>  
+	 		AND ROWNUM &lt;= #{page.endset} 
+    ) WHERE rnum &gt;= #{page.offset} 
+    
+	</select>
+	
+	<!-- 盘点历史记录 总记录数  beginDate endDate status -->
+  <select id="getpdHeadersCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+   	 SELECT COUNT(*) count
+ 	  from mes.mes_stocktaking_headers  
+  		WHERE 1=1
+ 		<if test="map.status != null and map.status != ''">
+            AND STATUS_FLAG = #{map.status}
+        </if>
+        <if test="map.beginDate != null and map.beginDate != ''">
+            AND PD_DATE &gt;= #{map.beginDate}
+        </if>
+        <if test="map.endDate != null and map.endDate != ''">
+            AND PD_DATE &lt;= #{map.endDate}
+        </if>
+	</select>
+   
+   
+   <!--盘点汇总 数据 -->
+  <select id="getIterationSummaryList" parameterType="java.util.Map" resultType="java.util.Map"> 	 
+		select  t.pd_number,
+		        t.subinventory_code,
+		        t.locattion_code,
+		        t.segment1,
+		        t.description,
+		        t.prod_type, 
+		        t.barcode_quantity, 
+		        t.pd_quantity,
+		        t.pd_date,
+		        t.erp_onhand_quantity,t.mo
+		   from apps.mes_stocktaking_sum_v t
+		  where 1 = 1
+		 	<if test="map.headerId != null and map.headerId != ''">
+          		 and t.header_id = #{map.headerId}
+       		 </if>
+       		 <if test="map.organizationId != null and map.organizationId != ''">
+          		 and t.organization_id = #{map.organizationId}
+       		 </if>     
+    ORDER BY t.segment1,t.locattion_code 
+	</select>
+
+<!-- 盘点明汇总Summary -->
+	<resultMap id="exportExcelSummary" type="com.egdfrm.unit.excelmodel.PDSummaryExcel">
+				<result column="pd_number" property="pdNumber" jdbcType="VARCHAR"/>	 
+		        <result column="pd_date" property="pdDate" jdbcType="VARCHAR"/>
+		        <result column="subinventory_code" property="subinventoryCode" jdbcType="VARCHAR"/>
+		        <result column="locattion_code" property="locattionCode" jdbcType="VARCHAR"/> 
+		        <result column="segment1" property="segment1" jdbcType="VARCHAR"/> 
+		        <result column="description" property="description" jdbcType="VARCHAR"/>
+				<result column="mo" property="mo" jdbcType="VARCHAR"/>
+		        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>
+		        <result column="erp_onhand_quantity" property="erpOnhandQuantity" jdbcType="NUMERIC"/> 
+		        <result column="pd_quantity" property="pdQuantity" jdbcType="NUMERIC"/> 
+		        <result column="barcode_quantity" property="barcodeQuantity" jdbcType="NUMERIC"/> 
+	</resultMap> 	
+	 
+   <!--盘点汇总 数据 -->
+  <select id="getIterationSummaryExcel" parameterType="java.util.Map" resultMap="exportExcelSummary"> 	 
+		select  t.pd_number,
+		        t.subinventory_code,
+		        t.locattion_code,
+		        t.segment1,
+		        t.description,
+		        t.prod_type, 
+		        t.barcode_quantity, 
+		        t.pd_quantity,
+		        t.pd_date,
+		        t.erp_onhand_quantity,t.mo
+		   from apps.mes_stocktaking_sum_v t
+		  where 1 = 1
+		 	<if test="map.headerId != null and map.headerId != ''">
+          		 and t.header_id = #{map.headerId}
+       		 </if>
+       		 <if test="map.organizationId != null and map.organizationId != ''">
+          		 and t.organization_id = #{map.organizationId}
+       		 </if>      
+	</select>
+		
+	
+	<!-- 盘点明细 entity -->
+	<resultMap id="exportExcelDetail" type="com.egdfrm.unit.excelmodel.PDDetailExcel">
+				<result column="pd_number" property="pdNumber" jdbcType="VARCHAR"/>	 
+		        <result column="pd_date" property="pdDate" jdbcType="VARCHAR"/>
+		        <result column="subinventory_code" property="subinventoryCode" jdbcType="VARCHAR"/>
+		        <result column="locattion_code" property="locattionCode" jdbcType="VARCHAR"/>
+		        <result column="wip_entity_name" property="wipEntityName" jdbcType="VARCHAR"/>
+		        <result column="segment1" property="segment1" jdbcType="VARCHAR"/> 
+		        <result column="description" property="description" jdbcType="VARCHAR"/> 
+		        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/> 
+		        <result column="pack_barcode" property="packBarcode" jdbcType="VARCHAR"/> 
+		        <result column="barcode_text" property="barcodeText" jdbcType="VARCHAR"/>
+		        <result column="type_description" property="typeDescription" jdbcType="VARCHAR"/>
+		        <result column="status_description" property="statusDescription" jdbcType="VARCHAR"/>
+		        <result column="pd_quantity" property="pdQuantity" jdbcType="NUMERIC"/> 
+		        <result column="barcode_quantity" property="barcodeQuantity" jdbcType="NUMERIC"/>
+		        <result column="quantity" property="quantity" jdbcType="NUMERIC"/> 
+	</resultMap> 
+	<!--盘点明细 数据excel -->
+  <select id="getDetailListExcel" parameterType="java.util.Map" resultMap="exportExcelDetail"> 
+			<![CDATA[
+				 select 
+		   v.organization_id,
+		   v.header_id,
+		   v.pd_number,
+		   v.pd_date,
+		   v.subinventory_code,
+		   v.locattion_code,
+		   v.segment1,
+		   v.description,
+		   v.prod_type,
+		   v.pack_barcode,
+		   v.barcode_text,
+		   v.type_description,
+		   v.status_description,
+		   nvl(v.pd_quantity,0) pd_quantity,
+		   nvl(v.barcode_quantity,0) barcode_quantity,
+		   v.wip_entity_name
+		  from apps.mes_stocktaking_lines_v v
+		 where  1=1 and nvl(v.pd_quantity,0) <> nvl(v.barcode_quantity,0)
+		 ]]> 
+		 	 <if test="map.headerId != null and map.headerId != ''">
+          		 and v.header_id = #{map.headerId}
+       		 </if>
+       		 <if test="map.organizationId != null and map.organizationId != ''">
+          		 and v.organization_id = #{map.organizationId}
+       		 </if>
+		      order by  v.status_description 
+			 
+	</select>
+	
+	<!-- 盘点明细count -->
+	  <select id="getDetailCount"  parameterType="java.util.Map" resultType="java.lang.Long">
+	  	<![CDATA[	
+	  	select count(1)
+		  from apps.mes_stocktaking_lines_v v
+			 where  1=1 and nvl(v.pd_quantity,0) <> nvl(v.barcode_quantity,0) 
+		]]>
+			 	 <if test="map.headerId != null and map.headerId != ''">
+	          		 and v.header_id = #{map.headerId}
+	       		 </if>
+	       		 <if test="map.organizationId != null and map.organizationId != ''">
+	          		 and v.organization_id = #{map.organizationId}
+	       		 </if> 
+	  </select>
+	  
+	  <!--盘点明细列表 -->
+	  <select id="getDetailList" parameterType="java.util.Map" resultType="java.util.Map">
+	  <![CDATA[
+	  select organization_id,header_id,pd_number,pd_date,subinventory_code,locattion_code,segment1,
+			   description,prod_type,pack_barcode,barcode_text,type_description, status_description,
+			   nvl(pd_quantity,0) pd_quantity, nvl(barcode_quantity,0) barcode_quantity,wip_entity_name from(
+		  select ROWNUM rnum,v.organization_id,v.header_id,v.pd_number,v.pd_date, v.subinventory_code,v.locattion_code, v.segment1,
+			   v.description,v.prod_type,v.pack_barcode,v.barcode_text,v.type_description, v.status_description,
+			   nvl(v.pd_quantity,0) pd_quantity, nvl(v.barcode_quantity,0) barcode_quantity,v.wip_entity_name
+			  from apps.mes_stocktaking_lines_v v
+			 where  1=1 and nvl(v.pd_quantity,0) <> nvl(v.barcode_quantity,0)
+			  ]]> 
+			 	 <if test="map.headerId != null and map.headerId != ''">
+	          		 and v.header_id = #{map.headerId}
+	       		 </if>
+	       		 <if test="map.organizationId != null and map.organizationId != ''">
+	          		 and v.organization_id = #{map.organizationId}
+	       		 </if> 
+	       		 AND ROWNUM &lt;= #{page.endset} 
+	      ) WHERE rnum &gt;= #{page.offset}
+	     
+	  </select>
+   		 
+</mapper>

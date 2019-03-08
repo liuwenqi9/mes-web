@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.ShoppackBarcodeMapper">
+
+    <!--获取当前产品条码-->
+    <select id="getCurrentBarcode" resultType="java.lang.String" parameterType="java.util.Map">
+        SELECT apps.mes_wip_barcodes_pkg.get_ship_num() barcode FROM dual
+    </select>
+
+    <!--获取开始和结束条码-->
+    <select id="getSEcode" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_wip_barcodes_pkg.create_ship_barcode(#{map.p_organization_id,mode=IN,jdbcType=NUMERIC},
+        #{map.p_print_quantity,mode=IN,jdbcType=NUMERIC},#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--获取条码补丁-->
+    <select id="getPatch" resultType="java.lang.String">
+        select t.barcode_text from mes.mes_packing_headers t where t.packing_type = 'SHIP_PACK'
+    </select>
+</mapper>

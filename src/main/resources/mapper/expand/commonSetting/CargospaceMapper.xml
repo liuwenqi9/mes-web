@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.commonSetting.CargospaceMapper" >
+
+  <!-- 查询货位  -->
+   <select id="searchCargospaceList" resultType="map">
+  <![CDATA[
+	SELECT (CASE
+	         WHEN MIL.DISABLE_DATE < SYSDATE THEN
+	          '无效'
+	         ELSE
+	          '有效'
+	       END) STATUS,
+	       DECODE(MSAV.LOCATOR_TYPE, 1, 'N', 'Y') ISENABLED,
+	       TO_CHAR(MIL.CREATION_DATE, 'YYYY-MM-DD HH24:MI:SS') FMT_CREATION_DATE,
+	       TO_CHAR(MIL.DISABLE_DATE, 'YYYY-MM-DD HH24:MI:SS') FMT_DISABLE_DATE,
+	       TO_CHAR(MIL.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') FMT_LAST_UPDATE_DATE,
+	       CAU.USER_NAME CREATE_USER,
+	       LAU.USER_NAME UPDATE_USER,
+	       MSAV.DESCRIPTION SUBINVENTORY_DESR,
+	       MIL.*
+	  FROM MES.MES_ITEM_LOCATTIONS MIL
+	 INNER JOIN APPS.MTL_SUBINVENTORIES_ALL_V MSAV
+	    ON MIL.SUBINVENTORY_CODE = MSAV.SECONDARY_INVENTORY_NAME
+	  LEFT JOIN MES.TT_APPLICATION_USER CAU
+	    ON MIL.CREATED_BY = CAU.USER_ID
+	   AND MSAV.LOCATOR_TYPE = 1
+	  LEFT JOIN MES.TT_APPLICATION_USER LAU
+	    ON MIL.LAST_UPDATED_BY = LAU.USER_ID
+	   AND MSAV.LOCATOR_TYPE = 1
+	 WHERE 1=1
+	]]>
+	 
+    <if test="sublibraryName != null and sublibraryName != ''" >
+    <![CDATA[
+	   AND MSAV.SECONDARY_INVENTORY_NAME = #{sublibraryName,jdbcType=VARCHAR}
+	]]>
+    </if>
+    <if test="cargospaceName != null and cargospaceName != ''" >
+    <![CDATA[
+    AND MIL.LOCATTION_CODE LIKE #{cargospaceName,jdbcType=VARCHAR}
+	]]>
+    </if>
+    <![CDATA[
+	 ORDER BY MIL.LOCATTION_CODE ASC
+	]]>
+  </select>
+</mapper>

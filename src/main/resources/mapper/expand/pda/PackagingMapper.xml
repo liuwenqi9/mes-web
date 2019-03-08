@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.PackagingMapper" >
+
+  <!-- 据包装条码获取包装剩余可包装数量 -->
+  <select id="getNumByPackBarcodeId" parameterType="String" resultType="String">
+    SELECT PH.QUANTITY - SUM(NVL(PL.QUANTITY, 0))
+	  FROM MES.MES_PACKING_HEADERS PH
+	  LEFT JOIN MES.MES_PACKING_LINES PL
+	    ON PH.PACKING_BARCODE_ID = PL.PACKING_BARCODE_ID
+	 WHERE PH.PACKING_BARCODE_ID = #{packingBarcodeId,jdbcType=DECIMAL} 
+	 GROUP BY PH.PACKING_BARCODE_ID, PH.QUANTITY 
+  </select>
+  
+   <parameterMap type="Map" id="packMap">
+    <parameter property="userId"  />
+    <parameter property="packingBarcodeId"  />
+    <parameter property="packBarcode"  /> <!--@hgb 包装箱条码 文本 -->
+    <parameter property="wipBarcodeId"  />
+    <parameter property="onhandQuantity"  /> 
+    <parameter property="isFlag"  />
+    <parameter property="dbreturn.xStatus" />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+ 
+ <!--@hgb PDA二次包装-包装条码，验证是否是上线返修，E ，上线返修，-->
+  <select id="callCheckPackForReprod" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.check_pack_for_reprod( 
+	  #{packBarcode,mode=IN,jdbcType=VARCHAR},  
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+ 
+  <!--PDA二次包装-产品条码校验 -->
+  <select id="callProcessPackCheck" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.process_pack_check( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{onhandQuantity,mode=IN,jdbcType=DECIMAL},
+	  #{isFlag,mode=IN,jdbcType=VARCHAR}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA发运包装-产品条码校验 -->
+  <select id="callProcessShipCheck" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_ship_pkg.process_ship_check( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA二次包装-提交-包装 -->
+  <select id="callProcessPack" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.process_pack( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wxQuantity,mode=IN,jdbcType=DECIMAL},
+	  #{flag,mode=IN,jdbcType=VARCHAR}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  
+  
+  
+   <parameterMap type="Map" id="callCommonProcessMap">
+    <parameter property="userId"  />
+    <parameter property="processId"  /> 
+    <parameter property="barCodeId"  /> 
+    <parameter property="dbreturn.xStatus"  />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+  <!--PDA二次包装-提交-插入temp表 -->
+  <select id="callPackInsertTransactionTemp" parameterMap="callCommonProcessMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.pack_insert_transaction_temp(
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{barCodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA二次包装-提交-ESB -->
+  <select id="callWipMoveTransaction" parameterMap="callCommonProcessMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.wip_move_transaction(
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  
+  <!--PDA拆包-扫描-校验 -->
+  <select id="callCheckDeleteBarcode" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.check_delete_barcode( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!--PDA拆包-提交 -->
+  <select id="callDeleteBarcode" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_wip_barcodes_pack_pkg.delete_barcode( 
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL}, 
+	  #{wxQuantity,mode=IN,jdbcType=DECIMAL}
+	)}
+  </select>
+  
+  <!--PDA发运包装-提交-包装-->
+  <select id="callProcessShipPack" parameterMap="packMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_ship_pkg.process_ship_pack( 
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{packingBarcodeId,mode=IN,jdbcType=DECIMAL},
+	  #{wipBarcodeId,mode=IN,jdbcType=DECIMAL}, 
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+
+	<!--大包装包xiao包装-->
+	<parameterMap type="Map" id="bigPackMap">
+		<parameter property="userId"  />
+		<parameter property="bigPack"  />
+		<parameter property="samllPack"  />
+		<parameter property="dbreturn.xStatus"  />
+		<parameter property="dbreturn.xMessage" />
+	</parameterMap>
+
+
+	<select id="getBigPackByBarcode" parameterType="String" resultType="Map">
+		 select * from mes.mes_packing_headers h where h.quantity=0 and  h.packing_type='B_PACK' and h.barcode_text=#{parameter}
+	</select>
+
+	<select id="getPackByBarcode" parameterType="String" resultType="Map">
+		select * from mes.mes_packing_headers h where  h.barcode_text=#{parameter}
+	</select>
+
+	<select id="getSmallPackByBarcode" parameterType="String" resultType="Map">
+				select h.*,
+				 b.segment1,
+				 apps.mes_barcodes_pd_pkg.get_prod_type(b.inventory_item_id) prod_type
+			  from mes.mes_packing_headers h, apps.mtl_system_items_b b
+			 where b.inventory_item_id(+) = h.inventory_item_id
+			   and b.organization_id(+)=h.organization_id
+			   and h.packing_type = 'B_PACK'
+			   and h.pack_quantity is not null
+			   and h.inventory_item_id is not null
+			   and h.status_code is null
+			   and h.inspect_number is null
+			   and h.inspect_number is null
+		   and h.barcode_text=#{parameter}
+	</select>
+
+</mapper>

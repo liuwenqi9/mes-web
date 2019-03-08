@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.SpecialBusinessMapper">
+
+    <!--产品条码重置-->
+    <select id="productNumReset" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_special_pkg.process_prod_barcode(#{map.p_wip_name,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--包装条码重置-->
+    <select id="packageNumReset" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_special_pkg.process_pack_barcode(#{map.p_wip_name,mode=IN,jdbcType=VARCHAR},#{map.p_pack_type,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--包装尾数重置-->
+    <select id="packageMantissaReset" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_special_pkg.process_pack_quantity(#{map.p_pack_name,mode=IN,jdbcType=VARCHAR},#{map.p_quantity,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--额外新增工单包装箱-->
+    <select id="additional" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_special_pkg.create_pack_barcode(#{map.p_wip_entity_name,mode=IN,jdbcType=VARCHAR},
+        #{map.p_user_id,mode=IN,jdbcType=NUMERIC},#{map.p_pack_type,mode=IN,jdbcType=VARCHAR},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--工单转产-->
+    <select id="theSingleTurn" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_barcodes_special_pkg.process_pack(#{map.p_pack_name,mode=IN,jdbcType=VARCHAR},#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+        #{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--包装类型查询-->
+    <select id="getPackageTypes" resultType="java.util.Map">
+        select t.lookup_code,t.description
+        from mes.mes_lookups t
+        where t.lookup_type = 'PACKING_TYPE'
+        and t.lookup_code &lt;&gt; 'P_PACK'
+    </select>
+    
+    <!-- 验证包装箱是否属于当前登录的生产线或admin  -->
+     <select id="verifyPackBarcodeIsPlanLine" resultType="java.lang.String" parameterType="java.util.Map" > 
+	 select ph.packing_barcode_id
+	    from mes.mes_packing_headers ph
+	   where ph.barcode_text = #{map.packBarcode,jdbcType=VARCHAR} and ph.pack_quantity > 0
+	    and ( ph.line_code = ( select us.plan_line_code
+	                                  from mes.tt_application_user us
+	                               where us.user_id = #{map.userId,jdbcType=VARCHAR}
+	                          ) or ph.line_code is null )
+    </select>
+     
+    <!-- 包装箱线别重置 -->
+    <update id="planLineResetHeaders" parameterType="java.util.Map" >
+	    update mes.mes_packing_headers ph
+	     set ph.line_code = #{map.lineCode,jdbcType=VARCHAR}
+	        ,ph.last_update_date = sysdate
+		    ,ph.last_updated_by=#{map.userId,jdbcType=VARCHAR}  
+	     	where ph.barcode_text=#{map.packBarcode,jdbcType=VARCHAR} 
+    </update>
+    
+    <!-- 修改条码表线别-->
+    <update id="planLineResetBarcodes" parameterType="java.util.Map" >
+	    update mes.mes_wip_barcodes wb 
+	    set wb.line_code=#{map.lineCode,jdbcType=VARCHAR}
+		  ,wb.last_update_date = sysdate
+		  ,wb.last_updated_by=#{map.userId,jdbcType=VARCHAR}
+           where wb.wip_barcode_id in
+                 (select ll.line_barcode_id
+                    from mes.mes_packing_headers ph,
+                         mes.mes_packing_lines   ll
+                   where ph.barcode_text = #{map.packBarcode,jdbcType=VARCHAR}
+                     and ph.packing_barcode_id = ll.packing_barcode_id)
+    </update>
+
+    <!-- 验证工单是否存在  -->
+    <select id="verifyWipName" resultType="java.lang.String" parameterType="java.util.Map" >
+       select WE.WIP_ENTITY_NAME from apps.WIP_DISCRETE_JOBS WDJ,apps.WIP_ENTITIES WE
+           where WE.WIP_ENTITY_ID = WDJ.WIP_ENTITY_ID and WE.WIP_ENTITY_NAME= #{map.wipName,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 修改工单数量-->
+    <update id="wipNumReset" parameterType="java.util.Map" >
+        UPDATE apps.WIP_DISCRETE_JOBS WDJ
+                 SET WDJ.ATTRIBUTE9 = #{map.num,jdbcType=VARCHAR}
+             WHERE 1 = 1
+                 AND EXISTS (SELECT 1
+                                FROM apps.WIP_ENTITIES WE
+                             WHERE WE.WIP_ENTITY_ID = WDJ.WIP_ENTITY_ID
+                                 AND WE.WIP_ENTITY_NAME =  #{map.wipName,jdbcType=VARCHAR})
+
+    </update>
+    
+</mapper>

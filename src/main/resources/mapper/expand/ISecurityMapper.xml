@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.core.mapper.expand.ISecurityMapper">
+    <select id="findUserRoles" resultType="java.lang.String">
+        SELECT UR.ROLE_CODE FROM TT_USER_ROLE UR  WHERE UR.LOGIN_NAME=#{loginName} 
+    </select>
+    <select id="findRolePermissions" resultType="java.util.HashMap">
+        SELECT A.FUNCTION_CODE,A.PURVIEW_CODE FUNCTION_PURVIEW
+        FROM TT_ROLE_FUNCTION A
+        LEFT JOIN TT_FUNCTION B ON
+        A.FUNCTION_CODE=B.FUNCTION_CODE
+        LEFT JOIN TT_PURVIEW C ON A.PURVIEW_CODE=C.FUNCTION_CODE AND A.PURVIEW_CODE=C.PURVIEW_CODE
+        WHERE
+        B.STATUS=1 AND ROLE_CODE IN
+        <foreach collection="roleList" item="listItem" open="(" close=")" separator=",">
+            #{listItem}
+        </foreach>
+    </select>
+    <select id="findUserPermissions" resultType="java.util.HashMap">
+        SELECT A.FUNCTION_CODE,A.PURVIEW_CODE FUNCTION_PURVIEW
+        FROM TT_USER_FUNCTION A
+        LEFT
+        JOIN TT_FUNCTION B ON A.FUNCTION_CODE=B.FUNCTION_CODE
+        LEFT JOIN TT_PURVIEW C ON A.PURVIEW_CODE=C.FUNCTION_CODE AND
+        A.PURVIEW_CODE=C.PURVIEW_CODE
+        WHERE B.STATUS=1 AND A.LOGIN_NAME=#{loginName}
+    </select>
+    <select id="findRoleFunctions" resultType="java.lang.String">
+        SELECT A.FUNCTION_CODE FUNCTION_PURVIEW
+        FROM TT_ROLE_FUNCTION A
+        LEFT JOIN TT_FUNCTION B ON
+        A.FUNCTION_CODE=B.FUNCTION_CODE
+        LEFT JOIN
+        TT_PURVIEW C ON A.PURVIEW_CODE=C.FUNCTION_CODE AND A.PURVIEW_CODE=C.PURVIEW_CODE
+        WHERE B.STATUS=1 AND ROLE_CODE IN
+        <foreach collection="roleList" item="listItem" open="(" close=")" separator=",">
+            #{listItem}
+        </foreach>
+    </select>
+    <select id="findUserFunctions" resultType="java.lang.String">
+        SELECT A.FUNCTION_CODE FUNCTION_PURVIEW
+        FROM TT_USER_FUNCTION A
+        LEFT JOIN TT_FUNCTION B
+        ON
+        A.FUNCTION_CODE=B.FUNCTION_CODE
+        LEFT JOIN TT_PURVIEW C ON A.PURVIEW_CODE=C.FUNCTION_CODE AND
+        A.PURVIEW_CODE=C.PURVIEW_CODE
+        WHERE
+        B.STATUS=1 AND A.LOGIN_NAME=#{loginName}
+    </select>
+    <!-- add by sjf 20161201 取职责功能 -->
+    <select id="findJobFunctionsByLoginName" resultType="java.lang.String">
+		SELECT TF.FUNCTION_CODE
+		  FROM TT_USER_JOB TUB
+		  JOIN TT_JOB TJ
+		    ON TUB.JOB_CODE = TJ.JOB_CODE
+		  JOIN TT_JOB_ROLE TJR
+		    ON TJR.JOB_CODE = TJ.JOB_CODE
+		  JOIN TT_ROLE TR
+		    ON TR.ROLE_CODE = TJR.ROLE_CODE
+		  JOIN TT_ROLE_FUNCTION TRF
+		    ON TRF.ROLE_CODE = TR.ROLE_CODE
+		  JOIN TT_FUNCTION TF
+		    ON TF.FUNCTION_CODE = TRF.FUNCTION_CODE
+		   AND TF.STATUS = '1'
+		  LEFT JOIN TT_PURVIEW TP
+		    ON TF.FUNCTION_CODE = TP.FUNCTION_CODE
+		   AND TP.PURVIEW_CODE = TRF.PURVIEW_CODE
+		 WHERE TUB.LOGIN_NAME = #{loginName}
+    </select>
+    
+</mapper>

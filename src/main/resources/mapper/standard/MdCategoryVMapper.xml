@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.egdfrm.extend.mapper.standard.MdCategoryVMapper">
+  <resultMap id="BaseResultMap" type="com.egdfrm.extend.model.standard.MdCategoryV">
+    <result column="CATEGORY_ID" jdbcType="DECIMAL" property="categoryId" />
+    <result column="CREATE_BY" jdbcType="DECIMAL" property="createBy" />
+    <result column="CREATE_DATE" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="UPDATE_BY" jdbcType="DECIMAL" property="updateBy" />
+    <result column="UPDATE_DATE" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="BIG_CATEGORY" jdbcType="VARCHAR" property="bigCategory" />
+    <result column="BIG_CATEGORY_MEANING" jdbcType="VARCHAR" property="bigCategoryMeaning" />
+    <result column="MIDDLE_CATEGORY" jdbcType="VARCHAR" property="middleCategory" />
+    <result column="MIDDLE_CATEGORY_MEANING" jdbcType="VARCHAR" property="middleCategoryMeaning" />
+    <result column="SMALL_CATEGORY" jdbcType="VARCHAR" property="smallCategory" />
+    <result column="SMALL_CATEGORY_MEANING" jdbcType="VARCHAR" property="smallCategoryMeaning" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    CATEGORY_ID, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, BIG_CATEGORY, BIG_CATEGORY_MEANING, 
+    MIDDLE_CATEGORY, MIDDLE_CATEGORY_MEANING, SMALL_CATEGORY, SMALL_CATEGORY_MEANING
+  </sql>
+  <select id="selectByExample" parameterType="com.egdfrm.extend.model.standard.MdCategoryVCriteria" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MD_CATEGORY_V
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.extend.model.standard.MdCategoryVCriteria">
+    delete from MD_CATEGORY_V
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <select id="countByExample" parameterType="com.egdfrm.extend.model.standard.MdCategoryVCriteria" resultType="java.lang.Integer">
+    select count(*) from MD_CATEGORY_V
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExample" parameterType="map">
+    update MD_CATEGORY_V
+    set CATEGORY_ID = #{record.categoryId,jdbcType=DECIMAL},
+      CREATE_BY = #{record.createBy,jdbcType=DECIMAL},
+      CREATE_DATE = #{record.createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{record.updateBy,jdbcType=DECIMAL},
+      UPDATE_DATE = #{record.updateDate,jdbcType=TIMESTAMP},
+      BIG_CATEGORY = #{record.bigCategory,jdbcType=VARCHAR},
+      BIG_CATEGORY_MEANING = #{record.bigCategoryMeaning,jdbcType=VARCHAR},
+      MIDDLE_CATEGORY = #{record.middleCategory,jdbcType=VARCHAR},
+      MIDDLE_CATEGORY_MEANING = #{record.middleCategoryMeaning,jdbcType=VARCHAR},
+      SMALL_CATEGORY = #{record.smallCategory,jdbcType=VARCHAR},
+      SMALL_CATEGORY_MEANING = #{record.smallCategoryMeaning,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+<insert id="insertrow" parameterType="map" statementType="CALLABLE">
+{call MD_CATEGORY_PKG.insert_row( 
+  #{record.categoryId,mode=IN,jdbcType=DECIMAL},#{record.createBy,mode=IN,jdbcType=DECIMAL},#{record.createDate,mode=IN,jdbcType=TIMESTAMP},
+  #{record.updateBy,mode=IN,jdbcType=DECIMAL},#{record.updateDate,mode=IN,jdbcType=TIMESTAMP},#{record.bigCategory,mode=IN,jdbcType=VARCHAR},
+  #{record.bigCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},#{record.middleCategory,mode=IN,jdbcType=VARCHAR},#{record.middleCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},
+  #{record.smallCategory,mode=IN,jdbcType=VARCHAR},#{record.smallCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},
+  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+)}
+</insert>
+<update id="updaterow" parameterType="map" statementType="CALLABLE">
+{call MD_CATEGORY_PKG.update_row( 
+  #{record.categoryId,mode=IN,jdbcType=DECIMAL},#{record.createBy,mode=IN,jdbcType=DECIMAL},#{record.createDate,mode=IN,jdbcType=TIMESTAMP},
+  #{record.updateBy,mode=IN,jdbcType=DECIMAL},#{record.updateDate,mode=IN,jdbcType=TIMESTAMP},#{record.bigCategory,mode=IN,jdbcType=VARCHAR},
+  #{record.bigCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},#{record.middleCategory,mode=IN,jdbcType=VARCHAR},#{record.middleCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},
+  #{record.smallCategory,mode=IN,jdbcType=VARCHAR},#{record.smallCategoryMeaning,mode=INOUT,jdbcType=VARCHAR},
+  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+)}
+</update>
+<delete id="deleterow" parameterType="map" statementType="CALLABLE">
+{call MD_CATEGORY_PKG.delete_row( 
+  #{categoryId,mode=IN,jdbcType=DECIMAL},#{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+)}
+</delete>
+<select id="selectrow" parameterType="java.math.BigDecimal" resultMap="BaseResultMap">
+  select 
+  <include refid="Base_Column_List" />
+  from MD_CATEGORY_V
+  where CATEGORY_ID = #{categoryId,jdbcType=DECIMAL}
+</select>
+</mapper>

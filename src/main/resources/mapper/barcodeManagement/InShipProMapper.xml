@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.barcodeManagement.InShipProMapper">
+
+	<resultMap id="resultmap" type="com.egdfrm.unit.model.barcodeManagement.InPro">
+        <result column="barcode_text" property="barcodeText" jdbcType="VARCHAR"/>
+        <result column="inventory_item_id" property="inventoryItemId" jdbcType="NUMERIC"/>
+        <result column="prod_type" property="prodType" jdbcType="VARCHAR"/>
+        <result column="segment1" property="segment1" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/> 
+        
+    </resultMap>
+    
+    <!-- 模态框 分页 -->
+    <select id="getModalTableList" resultMap="resultmap" parameterType="com.egdfrm.unit.model.barcodeManagement.InPro">
+    select  inventory_item_id,segment1,prod_type,description from (
+	     select ROWNUM rnum,inventory_item_id,segment1,
+	        apps.mes_barcodes_pd_pkg.get_prod_type(ms.inventory_item_id) prod_type,ms.description
+	        from apps.mtl_system_items_b ms
+	        where substr(ms.segment1, 1, 2) in ('18', '19') 
+	        and ms.organization_id = 101
+	        <if test="model.findName != null and model.findName != ''">
+	        and ( ms.segment1=#{model.findName} or upper(ms.description) like '%'|| upper(#{model.findName}) ||'%'
+	        )
+	        </if>
+          AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset}
+      </select>
+     <!-- 模态框  总记录数 --> 
+    <select id="getModalTableCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.model.barcodeManagement.InPro">
+   	select count(1) tatol
+        from apps.mtl_system_items_b ms
+        where substr(ms.segment1, 1, 2) in ('18', '19') 
+        and ms.organization_id = 101
+        <if test="model.findName != null and model.findName != ''">
+        and ( ms.segment1=#{model.findName} or upper(ms.description) like '%'|| upper(#{model.findName}) ||'%'
+        )
+        </if>
+    </select>
+   <insert id="insertToShip" parameterType="com.egdfrm.unit.model.barcodeManagement.InPro"> 
+		    insert into mes.mes_wip_barcodes
+		   (wip_barcode_id,
+		    organization_id,
+		    wip_entity_id,
+		    primary_item_id,
+		    barcode_type,
+		    barcode_text,
+		    subinventory_code,
+		    locattion_code,
+		    start_quantity,
+		    onhand_quantity,
+		    packing_flag,
+		    status_code,
+		    last_update_date,
+		    last_updated_by,
+		    creation_date,
+		    created_by,
+		    attribute2)
+		 values
+		   (mes_wip_barcodes_s.nextval,
+		    101,
+		    null,
+		    #{model.inventoryItemId,jdbcType=NUMERIC}, 
+		    'NX_BARCODE',
+		    #{model.barcodeText},
+		    'L001',
+		    'L001',
+		    1,
+		    1,
+		    'Y',
+		    'SHIP',
+		    sysdate,
+		    #{uid,jdbcType=NUMERIC},
+		    sysdate,
+		    #{uid,jdbcType=NUMERIC},
+		    'CRATE_SHIP')
+    </insert>
+	<update id="updateToShip" parameterType="com.egdfrm.unit.model.barcodeManagement.InPro">
+		update  mes.mes_wip_barcodes  SET
+		primary_item_id=#{model.inventoryItemId},
+		subinventory_code='L001',
+		locattion_code='L001',
+		status_code='SHIP',
+		last_update_date=sysdate,
+		last_updated_by=#{uid},
+		attribute2='UPDATE_SHIP'
+		where barcode_text=#{model.barcodeText}
+
+	</update>
+
+	<select id="isNull" resultType="java.lang.String" parameterType="java.lang.String">
+ 	select wb.barcode_text from mes.mes_wip_barcodes wb where wb.barcode_text=#{model.barcodeText}
+   </select>
+
+	<select id="isStatus" resultType="java.util.Map" parameterType="java.lang.String">
+		select wb.barcode_text from mes.mes_wip_barcodes wb where  wb.wip_entity_id is null and wb.primary_item_id is null and wb.status_code='PROD' and wb.barcode_text=#{model.barcodeText}
+	</select>
+</mapper>

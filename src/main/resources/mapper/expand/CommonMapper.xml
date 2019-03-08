@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.CommonMapper" >
+ 
+  <!-- 获取组织ID -->
+  <select id="getOrgId" parameterType="String" resultType="java.math.BigDecimal">
+	select ood.organization_id
+	  from apps.org_organization_definitions ood
+	 where ood.organization_code = #{code,jdbcType=VARCHAR}
+  </select>
+  <!-- 共通方法-根据序列名获取下一序列 -->
+  <select id="getSeqByName" parameterType="String" resultType="java.math.BigDecimal">
+	SELECT apps.get_seq(#{seq,jdbcType=VARCHAR})  FROM dual
+  </select>
+  
+  <!-- 获取数据字典列表 -->
+  <select id="getLookUpByCode" parameterType="String" resultType="map">
+	SELECT * FROM MES.MES_LOOKUPS T WHERE T.LOOKUP_TYPE = #{code,jdbcType=VARCHAR}
+  </select>
+</mapper>

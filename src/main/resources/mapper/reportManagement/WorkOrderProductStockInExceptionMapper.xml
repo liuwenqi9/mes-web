@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.reportManagement.WorkOrderProductStockInExceptionMapper">
+
+    <resultMap id="result" type="com.egdfrm.unit.excelmodel.WorkOrderProductStockInException">
+        <result column="wip_entity_name" property="wip_entity_name" jdbcType="VARCHAR" />
+        <result column="mo_order" property="mo_order" jdbcType="VARCHAR" />
+        <result column="plan_line_code" property="plan_line_code" jdbcType="VARCHAR" />
+        <result column="item_no" property="item_no" jdbcType="VARCHAR" />
+        <result column="prod_type" property="prod_type" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" /> 
+        <result column="wip_status" property="wip_status" jdbcType="VARCHAR" />
+        <result column="start_quantity" property="start_quantity" jdbcType="NUMERIC" />
+        <result column="prod_quantity" property="prod_quantity" jdbcType="NUMERIC" />
+        <result column="mes_inv_quantity" property="mes_inv_quantity" jdbcType="NUMERIC" />
+        <result column="erp_inv_quantity" property="erp_inv_quantity" jdbcType="NUMERIC" /> 
+        <result column="scheduled_start_date" property="scheduled_start_date" jdbcType="VARCHAR" />
+        <result column="min_transaction_date" property="min_transaction_date" jdbcType="VARCHAR" />
+     </resultMap>   
+      
+    <select id="findPageCount" resultType="java.lang.Long" parameterType="com.egdfrm.unit.excelmodel.WorkOrderProductStockInException">
+        select count(1) from apps.mes_wip_jobs_inv_v  where 1=1
+		<if test="work.wip_entity_name != null and work.wip_entity_name != ''">
+            AND wip_entity_name =  #{work.wip_entity_name}
+        </if>
+        
+    </select>
+ 
+    <select id="findPage" resultMap="result" parameterType="com.egdfrm.unit.excelmodel.WorkOrderProductStockInException">
+      SELECT * from ( 
+         select ROWNUM rnum ,p.* from
+						(select 
+						 wip_entity_name      
+						 ,mo_order              
+						 ,plan_line_code      
+						 ,item_no              
+						 ,prod_type            
+						 ,description           
+						 ,wip_status         
+						 ,start_quantity       
+						 ,prod_quantity         
+						 ,mes_inv_quantity      
+						 ,erp_inv_quantity     
+						 ,scheduled_start_date  
+						 ,min_transaction_date  
+						from apps.mes_wip_jobs_inv_v  where 1=1
+					<if test="work.wip_entity_name != null and work.wip_entity_name != ''">
+			            AND wip_entity_name =  #{work.wip_entity_name}
+			        </if>
+			        	) p  where 1=1
+        AND ROWNUM &lt;= #{page.endset}
+        ) WHERE rnum &gt;= #{page.offset} 
+        
+    </select>
+
+
+    <select id="export" resultMap="result" parameterType="com.egdfrm.unit.excelmodel.WorkOrderProductStockInException">
+        select
+			  wip_entity_name      
+			 ,mo_order              
+			 ,plan_line_code      
+			 ,item_no              
+			 ,prod_type            
+			 ,description           
+			 ,wip_status         
+			 ,start_quantity       
+			 ,prod_quantity         
+			 ,mes_inv_quantity      
+			 ,erp_inv_quantity     
+			 ,scheduled_start_date  
+			 ,min_transaction_date  
+			from apps.mes_wip_jobs_inv_v  where 1=1
+		<if test="work.wip_entity_name != null and work.wip_entity_name != ''">
+            AND wip_entity_name =  #{work.wip_entity_name}
+        </if> 	
+    </select>
+    
+</mapper>

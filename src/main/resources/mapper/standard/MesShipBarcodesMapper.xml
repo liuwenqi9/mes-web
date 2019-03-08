@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.MesShipBarcodesMapper" >
+  <resultMap id="BaseResultMap" type="com.egdfrm.unit.model.standard.MesShipBarcodes" >
+    <result column="SHIP_BARCODE_ID" property="shipBarcodeId" jdbcType="DECIMAL" />
+    <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+    <result column="BARCODE_TYPE" property="barcodeType" jdbcType="VARCHAR" />
+    <result column="BARCODE_TEXT" property="barcodeText" jdbcType="VARCHAR" />
+    <result column="STATUS_CODE" property="statusCode" jdbcType="VARCHAR" />
+    <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+    <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+    <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    SHIP_BARCODE_ID, ORGANIZATION_ID, BARCODE_TYPE, BARCODE_TEXT, STATUS_CODE, LAST_UPDATE_DATE, 
+    LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.egdfrm.unit.model.standard.MesShipBarcodesCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MES_SHIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.unit.model.standard.MesShipBarcodesCriteria" >
+    delete from MES_SHIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.egdfrm.unit.model.standard.MesShipBarcodes" >
+    insert into MES_SHIP_BARCODES (SHIP_BARCODE_ID, ORGANIZATION_ID, BARCODE_TYPE, 
+      BARCODE_TEXT, STATUS_CODE, LAST_UPDATE_DATE, 
+      LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+      )
+    values (#{shipBarcodeId,jdbcType=DECIMAL}, #{organizationId,jdbcType=DECIMAL}, #{barcodeType,jdbcType=VARCHAR}, 
+      #{barcodeText,jdbcType=VARCHAR}, #{statusCode,jdbcType=VARCHAR}, #{lastUpdateDate,jdbcType=DATE}, 
+      #{lastUpdatedBy,jdbcType=DECIMAL}, #{creationDate,jdbcType=DATE}, #{createdBy,jdbcType=DECIMAL}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.egdfrm.unit.model.standard.MesShipBarcodes" >
+    insert into MES_SHIP_BARCODES
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="shipBarcodeId != null" >
+        SHIP_BARCODE_ID,
+      </if>
+      <if test="organizationId != null" >
+        ORGANIZATION_ID,
+      </if>
+      <if test="barcodeType != null" >
+        BARCODE_TYPE,
+      </if>
+      <if test="barcodeText != null" >
+        BARCODE_TEXT,
+      </if>
+      <if test="statusCode != null" >
+        STATUS_CODE,
+      </if>
+      <if test="lastUpdateDate != null" >
+        LAST_UPDATE_DATE,
+      </if>
+      <if test="lastUpdatedBy != null" >
+        LAST_UPDATED_BY,
+      </if>
+      <if test="creationDate != null" >
+        CREATION_DATE,
+      </if>
+      <if test="createdBy != null" >
+        CREATED_BY,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="shipBarcodeId != null" >
+        #{shipBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="organizationId != null" >
+        #{organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="barcodeType != null" >
+        #{barcodeType,jdbcType=VARCHAR},
+      </if>
+      <if test="barcodeText != null" >
+        #{barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="statusCode != null" >
+        #{statusCode,jdbcType=VARCHAR},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="lastUpdatedBy != null" >
+        #{lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="creationDate != null" >
+        #{creationDate,jdbcType=DATE},
+      </if>
+      <if test="createdBy != null" >
+        #{createdBy,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.egdfrm.unit.model.standard.MesShipBarcodesCriteria" resultType="java.lang.Integer" >
+    select count(*) from MES_SHIP_BARCODES
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update MES_SHIP_BARCODES
+    <set >
+      <if test="record.shipBarcodeId != null" >
+        SHIP_BARCODE_ID = #{record.shipBarcodeId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.organizationId != null" >
+        ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.barcodeType != null" >
+        BARCODE_TYPE = #{record.barcodeType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.barcodeText != null" >
+        BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      </if>
+      <if test="record.statusCode != null" >
+        STATUS_CODE = #{record.statusCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.lastUpdateDate != null" >
+        LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="record.lastUpdatedBy != null" >
+        LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.creationDate != null" >
+        CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      </if>
+      <if test="record.createdBy != null" >
+        CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update MES_SHIP_BARCODES
+    set SHIP_BARCODE_ID = #{record.shipBarcodeId,jdbcType=DECIMAL},
+      ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      BARCODE_TYPE = #{record.barcodeType,jdbcType=VARCHAR},
+      BARCODE_TEXT = #{record.barcodeText,jdbcType=VARCHAR},
+      STATUS_CODE = #{record.statusCode,jdbcType=VARCHAR},
+      LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

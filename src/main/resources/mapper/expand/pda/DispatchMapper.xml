@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.DispatchMapper" >
+ 
+   <parameterMap type="Map" id="callCommonProcessMap">
+    <parameter property="userId"  />
+    <parameter property="processId"  /> 
+    <parameter property="barCodeId"  /> 
+    <parameter property="dbreturn.xStatus"  />
+    <parameter property="dbreturn.xMessage" />
+ </parameterMap>
+  <!--PDA发运确认-提交-循环插入-->
+  <select id="callInsertTransactionTemp" parameterMap="callCommonProcessMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_ship_pkg.insert_transaction_temp(
+	  #{userId,mode=IN,jdbcType=DECIMAL},
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{barCodeId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- PDA发运确认-提交-插入temp表 -->
+  <select id="callProcessMesTransaction" parameterMap="callCommonProcessMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_ship_pkg.process_mes_transaction(
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{expressNumber,mode=IN,jdbcType=VARCHAR},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+  <!-- PDA发运确认-提交-ESB -->
+  <select id="callBarcodesAutoShip" parameterMap="callCommonProcessMap" statementType="CALLABLE">
+	{call apps.mes_barcodes_ship_pkg.barcodes_auto_ship(
+	  #{processId,mode=IN,jdbcType=DECIMAL},
+	  #{dbreturn.xStatus,mode=OUT,jdbcType=VARCHAR},#{dbreturn.xMessage,mode=OUT,jdbcType=VARCHAR}
+	)}
+  </select>
+</mapper>

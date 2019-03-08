@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.expand.pda.InStockPreparingMapper" >
+ 
+
+  <!-- 据包装条码Id获取包装箱信息，包括： //产品编码： //数 量： -->
+  <select id="checkPackIsBelongInStockBill"  resultType="map">
+      select ms.segment1 "materialCode",
+       apps.mes_wip_barcodes_pack_pkg.get_pack_quantity(mh.packing_barcode_id) "quantity"
+  from apps.mtl_system_items_b ms,
+       mes_packing_headers     mh
+ where 1 = 1
+   and mh.inventory_item_id = ms.inventory_item_id
+   and mh.organization_id = ms.organization_id
+   and mh.barcode_text =#{pack_num,jdbcType=VARCHAR}
+   and mh.organization_id =#{organizationId,jdbcType=NUMERIC}
+   and mh.inv_number=#{stockNumber,jdbcType=VARCHAR}
+   </select>
+</mapper>

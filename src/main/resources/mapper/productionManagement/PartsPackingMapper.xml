@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.productionManagement.PartsPackingMapper">
+
+    <!--根据工单号查询-->
+    <select id="queryAll" resultType="java.util.Map" parameterType="java.lang.String">
+        select t.wip_entity_id,t.segment1,t.description,t.required_quantity,t.pack_quantity,t.inventory_item_id from apps.mes_part_pack_v t
+        WHERE 1 = 1
+        <if test="workOrderNumber != null and workOrderNumber != ''">
+            and wip_entity_name = #{workOrderNumber}
+        </if>
+    </select>
+
+    <!--包装箱查询-->
+    <select id="queryPackingAll" resultType="java.util.Map" parameterType="java.lang.String">
+        select wip_entity_name,barcode_text,pack_quantity,print_flag,packing_barcode_id from apps.mes_packing_headers_v
+        WHERE 1 = 1
+        <if test="workOrderNumber != null and workOrderNumber != ''">
+            and wip_entity_name = #{workOrderNumber}
+        </if>
+    </select>
+
+    <!--根据包装ID查询包装信息-->
+    <select id="findPackingById" resultType="java.util.Map" parameterType="java.lang.String">
+        select wip_entity_name,barcode_text,pack_quantity,print_flag,packing_barcode_id from apps.mes_packing_headers_v
+        WHERE 1 = 1
+        <if test="barcodeId != null and barcodeId != ''">
+            and packing_barcode_id = #{barcodeId}
+        </if>
+    </select>
+
+    <!--包装打印数据查询-->
+    <select id="getRows" resultType="java.util.Map" parameterType="java.lang.String">
+        select ms.segment1,ml.quantity,ms.description from mes.mes_packing_lines ml,mes.mes_wip_barcodes mb,apps.mtl_system_items_b ms
+        where mb.wip_barcode_id = ml.line_barcode_id and ms.inventory_item_id = mb.primary_item_id and ms.organization_id = mb.organization_id
+       and ml.packing_barcode_id = #{barcodeId}
+    </select>
+
+    <!--获取包装箱号-->
+    <select id="getPackageNum" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_part_back_pkg.create_pack_barcode(#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+          #{map.p_wip_id,mode=IN,jdbcType=NUMERIC},#{map.p_quantity,mode=IN,jdbcType=NUMERIC},
+          #{map.x_barcode_id,mode=OUT,jdbcType=NUMERIC},#{map.x_return_status,mode=OUT,jdbcType=VARCHAR},
+          #{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--保存包装数量-->
+    <select id="savePackingNumber" statementType="CALLABLE" parameterType="java.util.Map">
+        { call apps.mes_part_back_pkg.create_pack_line(#{map.p_user_id,mode=IN,jdbcType=NUMERIC},
+        #{map.p_wip_id,mode=IN,jdbcType=NUMERIC},#{map.p_item_id,mode=IN,jdbcType=NUMERIC},#{map.p_quantity,mode=IN,jdbcType=NUMERIC},
+        #{map.p_barcode_id,mode=IN,jdbcType=NUMERIC},#{map.x_return_status,mode=OUT,jdbcType=VARCHAR},#{map.x_msg_data,mode=OUT,jdbcType=VARCHAR}
+        ) }
+    </select>
+
+    <!--修改打印状态-->
+    <update id="updateStatus" parameterType="java.util.Arrays">
+        update mes.mes_packing_headers t set t.print_flag = 'Y' where t.packing_barcode_id IN
+        <foreach collection="barcodeIds" item="barcodeId" open="(" separator="," close=")">
+            #{barcodeId}
+        </foreach>
+    </update>
+</mapper>

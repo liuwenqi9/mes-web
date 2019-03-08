@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.egdfrm.unit.mapper.standard.MesCapacityPackingMapper" >
+  <resultMap id="BaseResultMap" type="com.egdfrm.unit.model.standard.MesCapacityPacking" >
+    <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+    <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+    <result column="INVENTORY_ITEM_ID" property="inventoryItemId" jdbcType="DECIMAL" />
+    <result column="B_QUANTITY" property="bQuantity" jdbcType="DECIMAL" />
+    <result column="S_QUANTITY" property="sQuantity" jdbcType="DECIMAL" />
+    <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+    <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+    <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    HEADER_ID, ORGANIZATION_ID, INVENTORY_ITEM_ID, B_QUANTITY, S_QUANTITY, LAST_UPDATE_DATE, 
+    LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.egdfrm.unit.model.standard.MesCapacityPackingCriteria" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from MES_CAPACITY_PACKING
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="com.egdfrm.unit.model.standard.MesCapacityPackingCriteria" >
+    delete from MES_CAPACITY_PACKING
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from MES_CAPACITY_PACKING M
+    where M.HEADER_ID=#{headerId,jdbcType=DECIMAL}
+  </delete>
+  
+  <insert id="insert" parameterType="com.egdfrm.unit.model.standard.MesCapacityPacking" >
+    insert into MES_CAPACITY_PACKING (HEADER_ID, ORGANIZATION_ID, INVENTORY_ITEM_ID, 
+      B_QUANTITY, S_QUANTITY, LAST_UPDATE_DATE, 
+      LAST_UPDATED_BY, CREATION_DATE, CREATED_BY
+      )
+    values (mes_capacity_packing_s.nextval, #{organizationId,jdbcType=DECIMAL}, #{inventoryItemId,jdbcType=DECIMAL}, 
+      #{bQuantity,jdbcType=DECIMAL}, #{sQuantity,jdbcType=DECIMAL}, SYSDATE, 
+      #{lastUpdatedBy,jdbcType=DECIMAL}, SYSDATE, #{createdBy,jdbcType=DECIMAL}
+      )
+  </insert>
+  
+  
+  
+  <insert id="insertSelective" parameterType="com.egdfrm.unit.model.standard.MesCapacityPacking" >
+    insert into MES_CAPACITY_PACKING
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="headerId != null" >
+        HEADER_ID,
+      </if>
+      <if test="organizationId != null" >
+        ORGANIZATION_ID,
+      </if>
+      <if test="inventoryItemId != null" >
+        INVENTORY_ITEM_ID,
+      </if>
+      <if test="bQuantity != null" >
+        B_QUANTITY,
+      </if>
+      <if test="sQuantity != null" >
+        S_QUANTITY,
+      </if>
+      <if test="lastUpdateDate != null" >
+        LAST_UPDATE_DATE,
+      </if>
+      <if test="lastUpdatedBy != null" >
+        LAST_UPDATED_BY,
+      </if>
+      <if test="creationDate != null" >
+        CREATION_DATE,
+      </if>
+      <if test="createdBy != null" >
+        CREATED_BY,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="headerId != null" >
+        #{headerId,jdbcType=DECIMAL},
+      </if>
+      <if test="organizationId != null" >
+        #{organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="inventoryItemId != null" >
+        #{inventoryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="bQuantity != null" >
+        #{bQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="sQuantity != null" >
+        #{sQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="lastUpdatedBy != null" >
+        #{lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="creationDate != null" >
+        #{creationDate,jdbcType=DATE},
+      </if>
+      <if test="createdBy != null" >
+        #{createdBy,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.egdfrm.unit.model.standard.MesCapacityPackingCriteria" resultType="java.lang.Integer" >
+    select count(*) from MES_CAPACITY_PACKING
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update MES_CAPACITY_PACKING
+    <set >
+      <if test="record.headerId != null" >
+        HEADER_ID = #{record.headerId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.organizationId != null" >
+        ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.inventoryItemId != null" >
+        INVENTORY_ITEM_ID = #{record.inventoryItemId,jdbcType=DECIMAL},
+      </if>
+      <if test="record.bQuantity != null" >
+        B_QUANTITY = #{record.bQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="record.sQuantity != null" >
+        S_QUANTITY = #{record.sQuantity,jdbcType=DECIMAL},
+      </if>
+      <if test="record.lastUpdateDate != null" >
+        LAST_UPDATE_DATE = #{record.lastUpdateDate,jdbcType=DATE},
+      </if>
+      <if test="record.lastUpdatedBy != null" >
+        LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      </if>
+      <if test="record.creationDate != null" >
+        CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      </if>
+      <if test="record.createdBy != null" >
+        CREATED_BY = #{record.createdBy,jdbcType=DECIMAL},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update MES_CAPACITY_PACKING
+    set HEADER_ID = #{record.headerId,jdbcType=DECIMAL},
+      ORGANIZATION_ID = #{record.organizationId,jdbcType=DECIMAL},
+      INVENTORY_ITEM_ID = #{record.inventoryItemId,jdbcType=DECIMAL},
+      B_QUANTITY = #{record.bQuantity,jdbcType=DECIMAL},
+      S_QUANTITY = #{record.sQuantity,jdbcType=DECIMAL},
+      LAST_UPDATE_DATE = SYSADTE,
+      LAST_UPDATED_BY = #{record.lastUpdatedBy,jdbcType=DECIMAL},
+      CREATION_DATE = #{record.creationDate,jdbcType=DATE},
+      CREATED_BY = #{record.createdBy,jdbcType=DECIMAL}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.egdfrm.unit.model.standard.MesCapacityPacking"> 
+     update MES_CAPACITY_PACKING
+    set
+      ORGANIZATION_ID = #{organizationId,jdbcType=DECIMAL},
+      INVENTORY_ITEM_ID = #{inventoryItemId,jdbcType=DECIMAL},
+      B_QUANTITY = #{bQuantity,jdbcType=DECIMAL},
+      S_QUANTITY = #{sQuantity,jdbcType=DECIMAL},
+      LAST_UPDATE_DATE = SYSDATE,
+      LAST_UPDATED_BY = #{lastUpdatedBy,jdbcType=DECIMAL}
+     where HEADER_ID = #{headerId,jdbcType=DECIMAL}
+  </update>
+  
+</mapper>
